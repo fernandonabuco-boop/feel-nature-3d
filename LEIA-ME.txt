@@ -1,0 +1,21 @@
+FEEL NATURE · DISPONIBILIDADE 3D — pacote para o Vercel
+
+PUBLICAR (escolha um caminho)
+1) Pelo GitHub (recomendado para atualizar depois)
+   - Crie um repositório (ex.: calper/feel-nature-3d) e suba o conteúdo desta pasta.
+   - Em vercel.com > Add New > Project > importe o repositório.
+   - Framework Preset: "Other". Build Command: vazio. Output Directory: "." (raiz).
+   - Deploy. Cada atualização no repositório publica sozinha.
+2) Pelo terminal (TI)
+   - Dentro desta pasta: npx vercel --prod
+
+ATUALIZAR A DISPONIBILIDADE
+- Arquivo: data/unidades.json (424 unidades).
+- Cada unidade: b = bloco, u = unidade, a = área (m²), st = "d" (disponível) ou "v" (vendida).
+- Disponíveis também têm: p = preço, s = sinal, m = mensal, i = intermediária, f = parcela única.
+- "meta.tabela" é o texto do rodapé (mês e data da tabela).
+
+AJUSTES RÁPIDOS
+- Botão "Tenho interesse" e links do topo: no início do app.js, procure por
+  linktr.ee/comercialcalper e troque pelo link do WhatsApp do comercial.
+- Link direto para uma unidade: adicione #b2-514 ao endereço (bloco 2, unidade 514).

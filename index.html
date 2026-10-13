@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Feel Nature 3D</title>
+<meta name="description" content="Disponibilidade em 3D do Feel Nature · Pontal Oceânico, Recreio dos Bandeirantes. Unidades, plantas, preços e fluxo de pagamento.">
+<meta name="theme-color" content="#111813">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400&family=Figtree:wght@400;500;600&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+img{max-width:100%}
+/* Layout: cena 3D ocupando a tela; marca no topo, filtros à esquerda, ficha da unidade à direita (bottom sheets no celular) */
+:root {
+  color-scheme: dark;
+  --bg: #111813;          /* mata atlântica à noite */
+  --panel: rgba(21, 28, 23, 0.9);
+  --panel-solid: #161e18;
+  --fg: #ece6d8;          /* areia */
+  --muted: #9ba79c;
+  --line: rgba(236, 230, 216, 0.12);
+  --wood: #b98a5e;        /* ripado da fachada */
+  --leaf: #8fd6a1;        /* disponível */
+  --leaf-ink: #0f2a18;
+  --gold: #e9b44c;        /* selecionada */
+  --f-display: 'Josefin Sans', 'Futura', 'Century Gothic', system-ui, sans-serif;
+  --f-body: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --r: 14px;
+}
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; overflow: hidden; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+#app { position: relative; height: 100%; width: 100%; overflow: hidden; }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tag3d { position: absolute; left: 0; top: 0; font-family: var(--f-display); font-weight: 400; letter-spacing: .22em; text-transform: uppercase; font-size: 11px; color: var(--fg); background: rgba(17, 24, 19, .72); padding: 5px 9px 3px; border-radius: 4px; white-space: nowrap; transition: opacity .2s; }
+.tag3d.sun { background: none; color: var(--gold); text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+.tag3d.street { background: none; color: var(--muted); font-size: 10px; }
+
+/* Topo */
+.brand { position: absolute; top: calc(18px + env(safe-area-inset-top, 0px)); left: 20px; z-index: 3; max-width: min(520px, calc(100% - 40px)); pointer-events: none; }
+.brand * { pointer-events: auto; }
+.logo { font-family: var(--f-display); font-weight: 300; text-transform: uppercase; line-height: 1; margin: 0; }
+.logo .feel { display: block; font-size: 34px; letter-spacing: .42em; }
+.logo .sub { display: block; font-size: 10.5px; letter-spacing: .38em; color: var(--muted); margin-top: 8px; }
+.logo .nat { color: var(--leaf); }
+#hero-stat { margin: 14px 0 0; font-size: 14px; color: var(--fg); }
+#hero-stat b { font-weight: 600; color: var(--leaf); font-variant-numeric: tabular-nums; }
+.addr { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
+#links { position: absolute; top: calc(18px + env(safe-area-inset-top, 0px)); right: 20px; z-index: 3; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 46%; }
+#links a { text-decoration: none; font-size: 12.5px; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); }
+#links a:hover { border-color: var(--leaf); }
+
+/* Painéis */
+.panel { background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: var(--r); }
+#filters { position: absolute; z-index: 4; left: 20px; top: 168px; bottom: 76px; width: 330px; display: flex; flex-direction: column; overflow: hidden; }
+.f-head { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 16px 4px; }
+.f-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.f-head h2 span { color: var(--leaf); font-variant-numeric: tabular-nums; }
+.link { font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+#filters-close { display: none; }
+.f-body { padding: 8px 16px 12px; display: grid; gap: 14px; border-bottom: 1px solid var(--line); }
+.label { margin: 0 0 7px; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); display: inline-flex; gap: 6px; align-items: baseline; }
+.chip span { font-size: 11px; font-variant-numeric: tabular-nums; opacity: .8; }
+.chip.on { background: var(--leaf); color: var(--leaf-ink); border-color: var(--leaf); font-weight: 500; }
+.segs { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg { flex: 1; padding: 7px 0; font-size: 12.5px; color: var(--muted); border-right: 1px solid var(--line); }
+.seg:last-child { border-right: 0; }
+.seg.on { background: rgba(143, 214, 161, .16); color: var(--fg); font-weight: 600; }
+.range-row { display: flex; justify-content: space-between; align-items: baseline; }
+#f-preco-v { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--leaf); }
+.toggle { display: flex; gap: 8px; align-items: center; font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.toggle input { accent-color: var(--leaf); width: 16px; height: 16px; }
+#list { overflow-y: auto; flex: 1; padding: 6px 8px 10px; min-height: 0; }
+.row { width: 100%; display: grid; grid-template-columns: 62px 1fr auto; gap: 10px; align-items: center; text-align: left; padding: 9px 8px; border-radius: 9px; }
+.row:hover { background: rgba(236, 230, 216, .06); }
+.row.sel { background: rgba(233, 180, 76, .16); }
+.row small { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+.r-id b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.r-tipo { font-size: 12.5px; min-width: 0; }
+.r-preco { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--leaf); }
+.empty { color: var(--muted); padding: 12px 8px; margin: 0; line-height: 1.5; }
+
+/* Ficha da unidade */
+#unit { position: absolute; z-index: 5; right: 20px; top: 72px; bottom: 76px; width: 380px; overflow-y: auto; padding: 20px 20px 22px; }
+#unit-close { position: sticky; top: 0; float: right; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-solid); font-size: 18px; line-height: 1; margin: -6px -6px 0 0; }
+.eyebrow { margin: 0; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.u-num { margin: 6px 0 0; font-family: var(--f-display); font-weight: 300; font-size: 56px; letter-spacing: .08em; line-height: 1; }
+.u-tipo { margin: 8px 0 0; font-size: 15px; }
+.u-tipo span { color: var(--muted); }
+.tags { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tags li { font-size: 11.5px; padding: 4px 9px; border-radius: 6px; background: rgba(236, 230, 216, .07); color: var(--muted); }
+.tags li.st-d { background: var(--leaf); color: var(--leaf-ink); font-weight: 600; }
+.tags li.st-v { background: rgba(185, 138, 94, .25); color: var(--fg); }
+.price { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.price small { display: block; font-size: 11px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.price strong { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.fluxo { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.fluxo th { text-align: left; font-weight: 500; color: var(--muted); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 0 0 6px; }
+.fluxo th:nth-child(n+2), .fluxo td:nth-child(n+2) { text-align: right; }
+.fluxo td { padding: 8px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.fluxo td small { display: block; color: var(--muted); font-size: 11px; }
+.fluxo td:nth-child(2) { color: var(--muted); padding-right: 10px; }
+.cta { display: block; margin-top: 16px; text-align: center; text-decoration: none; background: var(--leaf); color: var(--leaf-ink); font-weight: 600; padding: 13px; border-radius: 11px; }
+.cta:hover { filter: brightness(1.07); }
+.sold { margin-top: 20px; padding: 14px; border-radius: 11px; background: rgba(185, 138, 94, .14); }
+.sold p { margin: 4px 0 10px; color: var(--muted); font-size: 13px; }
+.ghost { border: 1px solid var(--line); border-radius: 9px; padding: 8px 12px; font-size: 12.5px; }
+.ghost:hover { border-color: var(--leaf); }
+.plantas { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pl-tabs { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+.pl-img { display: block; width: 100%; padding: 8px; background: #f6f4ef; border-radius: 10px; cursor: zoom-in; }
+.pl-img img { display: block; width: 100%; height: auto; max-height: 420px; object-fit: contain; }
+.note { margin: 8px 0 0; font-size: 11px; color: var(--muted); line-height: 1.45; }
+
+/* Rodapé */
+.bottom { position: absolute; z-index: 3; left: 20px; right: 20px; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: space-between; align-items: center; gap: 12px; pointer-events: none; }
+.bottom > * { pointer-events: auto; }
+.legend { display: flex; gap: 14px; padding: 9px 14px; font-size: 12px; color: var(--muted); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+#views { display: flex; padding: 4px; gap: 2px; }
+#views button { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; color: var(--muted); }
+#views button:hover { color: var(--fg); background: rgba(236, 230, 216, .07); }
+#tabela { font-size: 11px; color: var(--muted); max-width: 300px; text-align: right; line-height: 1.4; }
+#btn-filtros { display: none; }
+
+#tip { position: fixed; left: 0; top: 0; z-index: 9; pointer-events: none; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; font-size: 12.5px; line-height: 1.5; }
+#tip b { font-size: 14px; }
+#tip em { font-style: normal; color: var(--leaf); font-weight: 600; }
+#tip .muted { color: var(--wood); }
+
+#lightbox { position: fixed; inset: 0; z-index: 20; background: rgba(8, 12, 9, .9); display: grid; place-items: center; padding: 24px; cursor: zoom-out; }
+#lightbox img { max-width: 100%; max-height: 100%; background: #f6f4ef; border-radius: 10px; padding: 12px; }
+
+#loader { position: absolute; inset: 0; z-index: 10; background: var(--bg) url('img/vista-geral.webp') center/cover; display: grid; place-items: end start; padding: 32px; transition: opacity 1s ease .3s, visibility 0s linear 1.3s; }
+#loader::before { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(17,24,19,.92), rgba(17,24,19,.2) 60%); }
+#loader-msg { position: relative; font-family: var(--f-display); letter-spacing: .3em; text-transform: uppercase; font-size: 12px; }
+body.ready #loader { opacity: 0; visibility: hidden; }
+
+.legal { position: absolute; z-index: 2; left: 20px; right: 20px; bottom: 4px; font-size: 9.5px; color: rgba(155, 167, 156, .7); text-align: center; pointer-events: none; }
+
+@media (max-width: 1100px) {
+  #unit { width: 340px; }
+  #filters { width: 300px; }
+  #tabela { display: none; }
+}
+@media (max-width: 760px) {
+  .logo .feel { font-size: 24px; }
+  .logo .sub { font-size: 9px; }
+  #hero-stat { font-size: 12.5px; margin-top: 10px; }
+  .addr { display: none; }
+  #links { display: none; }
+  .tag3d.sun, .tag3d.street { display: none; }
+  .brand { left: 16px; top: calc(14px + env(safe-area-inset-top, 0px)); }
+  #filters { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 78%; border-radius: 18px 18px 0 0; transform: translateY(105%); transition: transform .3s ease; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body.filters-open #filters { transform: none; }
+  #filters-close { display: inline; margin-left: 12px; }
+  #unit { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 62%; border-radius: 18px 18px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .bottom { left: 16px; right: 16px; flex-wrap: wrap; justify-content: center; }
+  .legend { display: none; }
+  #btn-filtros { display: block; background: var(--leaf); color: var(--leaf-ink); font-weight: 600; padding: 10px 16px; border-radius: 999px; }
+  #views button { padding: 7px 9px; }
+  body.has-unit .bottom, body.has-unit #labels, body.filters-open #labels { display: none; }
+  #filters { max-height: 66%; }
+  .legal { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <canvas id="scene" aria-label="Modelo 3D do Feel Nature com as unidades disponíveis destacadas em verde"></canvas>
+  <div id="labels" aria-hidden="true"></div>
+
+  <header class="brand">
+    <h1 class="logo"><span class="feel">Feel</span><span class="sub">Pontal Oceânico · <span class="nat">Nature</span></span></h1>
+    <p id="hero-stat">Carregando disponibilidade…</p>
+    <p class="addr">Rua Teixeira Heizer, 1.700 · Recreio dos Bandeirantes · Rio de Janeiro</p>
+  </header>
+  <nav id="links" aria-label="Conheça o empreendimento"></nav>
+
+  <aside id="filters" class="panel" aria-label="Filtros e unidades disponíveis">
+    <div class="f-head">
+      <h2><span id="count">0</span> unidades disponíveis</h2>
+      <div><button class="link" id="f-limpar">Limpar filtros</button><button class="link" id="filters-close">Fechar</button></div>
+    </div>
+    <div class="f-body">
+      <div><p class="label">Tipologia</p><div class="chips" id="f-tipos"></div></div>
+      <div><p class="label">Bloco</p><div class="chips" id="f-blocos"></div></div>
+      <div><p class="label">Pavimento · corta o prédio</p><div class="segs" id="f-andar"></div></div>
+      <div>
+        <div class="range-row"><p class="label">Preço máximo</p><span id="f-preco-v"></span></div>
+        <input type="range" id="f-preco" aria-label="Preço máximo">
+      </div>
+      <label class="toggle"><input type="checkbox" id="f-sodisp"> Esconder unidades vendidas</label>
+    </div>
+    <div id="list"></div>
+  </aside>
+
+  <section id="unit" class="panel" hidden aria-live="polite">
+    <button id="unit-close" aria-label="Fechar ficha da unidade">×</button>
+    <div id="unit-body"></div>
+  </section>
+
+  <div class="bottom">
+    <div class="legend panel">
+      <span><i style="background:var(--leaf)"></i>Disponível</span>
+      <span><i style="background:#c7cbb6"></i>Fora do filtro</span>
+      <span><i style="background:var(--wood)"></i>Vendida</span>
+      <span><i style="background:var(--gold)"></i>Selecionada</span>
+    </div>
+    <div id="views" class="panel" role="group" aria-label="Vistas">
+      <button data-view="geral">Geral</button>
+      <button data-view="nascente">Nascente</button>
+      <button data-view="poente">Poente</button>
+      <button data-view="topo">Implantação</button>
+    </div>
+    <button id="btn-filtros">Unidades · <span id="count-m">0</span></button>
+    <p id="tabela"></p>
+  </div>
+  <p class="legal">Imagens e volumetria ilustrativas. Posições, áreas e orientação conforme ficha técnica e book do empreendimento. Preços sujeitos a alteração sem aviso. Memorial de Incorporação registrado no Registro de Imóveis competente.</p>
+
+  <div id="tip" hidden></div>
+  <div id="lightbox" hidden><img id="lb-img" alt="Planta ampliada"></div>
+  <div id="loader"><p id="loader-msg">Carregando o Feel Nature</p></div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
