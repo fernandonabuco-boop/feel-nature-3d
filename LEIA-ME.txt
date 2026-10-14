@@ -1,21 +1,22 @@
-FEEL NATURE · DISPONIBILIDADE 3D — pacote para o Vercel
+FEEL NATURE · DISPONIBILIDADE 3D (v2)
 
-PUBLICAR (escolha um caminho)
-1) Pelo GitHub (recomendado para atualizar depois)
-   - Crie um repositório (ex.: calper/feel-nature-3d) e suba o conteúdo desta pasta.
-   - Em vercel.com > Add New > Project > importe o repositório.
-   - Framework Preset: "Other". Build Command: vazio. Output Directory: "." (raiz).
-   - Deploy. Cada atualização no repositório publica sozinha.
-2) Pelo terminal (TI)
-   - Dentro desta pasta: npx vercel --prod
+ARQUIVOS
+- index.html ............ o site completo (prédio, preços, plantas)
+- api/disponibilidade.js  lê o mapa online da DTCX a cada minuto (disponibilidade ao vivo)
+- data/unidades.json .... tabela de preços (opcional; o index.html já traz a de out/26)
 
-ATUALIZAR A DISPONIBILIDADE
-- Arquivo: data/unidades.json (424 unidades).
-- Cada unidade: b = bloco, u = unidade, a = área (m²), st = "d" (disponível) ou "v" (vendida).
-- Disponíveis também têm: p = preço, s = sinal, m = mensal, i = intermediária, f = parcela única.
-- "meta.tabela" é o texto do rodapé (mês e data da tabela).
+PUBLICAR NO GITHUB
+Suba os três itens mantendo as pastas: a pasta "api" PRECISA ir junto, com esse nome,
+na raiz do repositório. O Vercel reconhece a pasta api sozinho, sem configuração.
 
-AJUSTES RÁPIDOS
-- Botão "Tenho interesse" e links do topo: no início do app.js, procure por
-  linktr.ee/comercialcalper e troque pelo link do WhatsApp do comercial.
-- Link direto para uma unidade: adicione #b2-514 ao endereço (bloco 2, unidade 514).
+CONFERIR SE O "AO VIVO" ESTÁ FUNCIONANDO
+- Abra  seu-site.vercel.app/api/disponibilidade
+  Deve aparecer um texto começando com {"atualizado": ... e "disponiveis": um número.
+- No site, abaixo do total, aparece "Ao vivo · mapa online atualizado às HH:MM".
+  Se aparecer "Disponibilidade da tabela...", a leitura do mapa falhou e o site usa a tabela.
+- Diagnóstico: seu-site.vercel.app/api/disponibilidade?debug=1 (copie o texto e envie ao Claude).
+
+PREÇOS
+O status vem do mapa online em tempo real. Os preços continuam vindo da tabela.
+Unidade que volte a ficar disponível sem preço na tabela aparece como "Preço sob consulta".
+Para tabela nova: substitua data/unidades.json.
