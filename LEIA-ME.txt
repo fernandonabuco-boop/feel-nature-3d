@@ -1,17 +1,20 @@
-FEEL NATURE · DISPONIBILIDADE 3D (v5 · disponíveis em verde, reservadas em amarelo)
+FEEL NATURE · DISPONIBILIDADE 3D (v6)
+
+REGRA DE CORES (lida do mapa online DTCX a cada minuto)
+- VERDE (clicável, com preço): Não Vendida / Estoque
+- AMARELO (clicável, sem preço): Reservada/ Assinatura dos instrumentos aquisitivos;
+  Assinado, com Sinal a creditar e documentos na imobiliária;
+  Sinal a Creditar, mas com todos os documentos entregue na Calper
+- CINZA (sem acesso, sem dados): qualquer outra situação
 
 ARQUIVOS
-- index.html ............ o site completo (prédio, preços, plantas)
-- api/disponibilidade.js  lê o mapa online da DTCX a cada minuto (disponibilidade ao vivo)
-- data/unidades.json .... tabela de preços (opcional; o index.html já traz a de out/26)
+- index.html ............ o site completo
+- api/disponibilidade.js  leitura do mapa online (a regra acima fica no início deste arquivo)
+- data/unidades.json .... tabela de preços (opcional)
 
-STATUS NO SITE
-- Verde: disponível (preço, fluxo, planta)
-- Amarelo: reservada (planta e contato, sem preço)
-- Vendidas: só volume do prédio, sem clique e sem dados
+PUBLICAR: suba os três itens no GitHub mantendo as pastas (a pasta "api" na raiz).
 
-PUBLICAR NO GITHUB: suba os três itens mantendo as pastas (a pasta "api" na raiz).
-CONFERIR O AO VIVO: abra seu-site.vercel.app/api/disponibilidade
-  "metodo":"cor"   -> lê as cores da legenda do mapa (reservadas funcionam)
-  "metodo":"texto" -> lê imobiliária/data (reservadas não são separadas; envie o debug ao Claude)
-DIAGNÓSTICO: seu-site.vercel.app/api/disponibilidade?debug=1 (copie e envie ao Claude)
+CONFERIR: abra seu-site.vercel.app/api/disponibilidade
+  "metodo":"cor" ou "classe" -> o site está lendo a situação exata de cada unidade (verde/amarelo/cinza OK)
+  "metodo":"texto"           -> não reconheceu a legenda: só separa verde de cinza. Envie ao Claude o
+                                conteúdo de seu-site.vercel.app/api/disponibilidade?debug=1

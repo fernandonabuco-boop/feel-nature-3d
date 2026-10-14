@@ -8,6 +8,17 @@ const LEGENDA = [
   'Sinal a Creditar, mas com todos os documentos entregue', 'Sinal Creditado, mas com pendência', 'Sinal Creditado e sem pendência',
   'Processo Finalizado', 'cliente pediu distrato', 'Fora de venda',
 ];
+// Regra de cores do site (definida pelo comercial):
+// verde = Não Vendida / Estoque · amarelo = as 3 situações abaixo · cinza (sem acesso) = qualquer outra
+const AMARELO = ['Reservada', 'Assinado, com Sinal a creditar', 'Sinal a Creditar, mas com todos os documentos entregue'];
+const statusDe = (legenda) => (legenda === 'Não Vendida' ? 'd' : AMARELO.includes(legenda) ? 'r' : 'v');
+const CLS_RE = /class\s*=\s*["']([^"']+)["']/gi;
+// classes dos atributos class="" mais próximos do fim do trecho (o mais próximo primeiro)
+function classes(trecho, n = 3) {
+  const out = []; let m; CLS_RE.lastIndex = 0;
+  while ((m = CLS_RE.exec(trecho))) out.push(m[1]);
+  return out.slice(-n).reverse().join(' ').split(/\s+/).filter(Boolean);
+}
 const COR_RE = /(?:background(?:-color)?\s*:\s*|bgcolor\s*=\s*["']?)(#[0-9a-f]{3,8}|rgba?\([^)]*\))/gi;
 
 const norm = (c) => (c || '').toLowerCase().replace(/\s+/g, '');
@@ -37,6 +48,15 @@ function parse(html) {
     const c = ultimaCor(html.slice(Math.max(0, i - 500), i));
     if (c && !corLegenda[c]) corLegenda[c] = nome;
   }
+  // mapa de classes CSS da legenda (se a página usar classes em vez de cor inline)
+  const clsCount = {}, clsLabel = {};
+  for (const nome of LEGENDA) {
+    const i = html.indexOf(nome);
+    if (i < 0) continue;
+    for (const c of new Set(classes(html.slice(Math.max(0, i - 400), i), 1))) { clsCount[c] = (clsCount[c] || 0) + 1; clsLabel[c] = nome; }
+  }
+  const clsLegenda = {};
+  for (const c in clsCount) if (clsCount[c] === 1) clsLegenda[c] = clsLabel[c];
   const unidades = [];
   const partes = html.split(/BLOCO\s*0?([1-4])\b/i);
   for (let k = 1; k < partes.length; k += 2) {
@@ -54,21 +74,23 @@ function parse(html) {
       // cor do quadradinho: última cor inline antes do número no HTML
       const pos = bruto.indexOf('>' + u, busca);
       let cor = null;
-      if (pos >= 0) { cor = ultimaCor(bruto.slice(Math.max(busca, pos - 700), pos)); busca = pos + 1; }
-      const legenda = cor && corLegenda[cor] ? corLegenda[cor] : null;
-      let disponivel;
-      if (legenda) disponivel = legenda === 'Não Vendida';
-      else disponivel = !imob && !data;
-      // st: d = disponível, r = reservada, v = vendida/indisponível (vendidas não expõem mais nada)
-      const st = disponivel ? 'd' : legenda === 'Reservada' ? 'r' : 'v';
-      unidades.push({ b, u, d: disponivel ? 1 : 0, st });
+      const ini = Math.max(busca, pos - 700);   // trecho só desta unidade (desde a anterior)
+      if (pos >= 0) { cor = ultimaCor(bruto.slice(ini, pos)); busca = pos + 1; }
+      let legenda = cor && corLegenda[cor] ? corLegenda[cor] : null;
+      if (!legenda && pos >= 0) {
+        const cl = classes(bruto.slice(ini, pos)).find((c) => clsLegenda[c]);
+        if (cl) legenda = clsLegenda[cl];
+      }
+      // st: d = verde, r = amarelo, v = cinza sem acesso. Sem legenda identificada, usa imobiliária/data.
+      const st = legenda ? statusDe(legenda) : (!imob && !data ? 'd' : 'v');
+      unidades.push({ b, u, d: st === 'd' ? 1 : 0, st });
     }
   }
   // remove duplicadas (mantém a primeira ocorrência)
   const vistos = new Set();
   return {
     unidades: unidades.filter((x) => { const k = x.b + '-' + x.u; if (vistos.has(k)) return false; vistos.add(k); return true; }),
-    metodo: Object.keys(corLegenda).length >= 2 ? 'cor' : 'texto',
+    metodo: Object.keys(corLegenda).length >= 2 ? 'cor' : Object.keys(clsLegenda).length >= 2 ? 'classe' : 'texto',
   };
 }
 
