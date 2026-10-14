@@ -1,10 +1,11 @@
-FEEL NATURE · DISPONIBILIDADE 3D (v10 · cores do mapa online, Não Vendida em verde)
+FEEL NATURE · DISPONIBILIDADE 3D
 
-- Cada unidade aparece com a mesma cor e o mesmo nome de situação do mapa online DTCX.
-- Botão "Legenda de status": a mesma legenda do mapa, lida dele a cada minuto.
-- Acesso: Não Vendida = ficha completa com preço · Reservada / Assinado com sinal a creditar /
-  Sinal a creditar com docs na Calper = ficha sem preço · demais = sem acesso.
+Situação no mapa online DTCX (lida a cada minuto) → como aparece no site:
+- VERDE, com acesso à ficha: Não Vendida / Estoque
+- AMARELO, com acesso à ficha: Reservada/ Assinatura dos instrumentos aquisitivos;
+  Assinado, com Sinal a creditar e documentos na imobiliária;
+  Sinal a Creditar, mas com todos os documentos entregue na Calper
+- CINZA, sem acesso e sem dados: todas as demais situações
 
-ARQUIVOS: index.html · api/disponibilidade.js · data/unidades.json (opcional)
-PUBLICAR: suba os três itens no GitHub mantendo as pastas (a pasta "api" na raiz).
-CONFERIR: seu-site.vercel.app/api/disponibilidade  ->  deve mostrar "metodo":"dtcx"
+ARQUIVOS: index.html · api/disponibilidade.js (leitura do mapa) · data/unidades.json (tabela de preços)
+CONFERIR: https://feel-nature-3d.vercel.app/api/disponibilidade  ->  "metodo":"dtcx"
