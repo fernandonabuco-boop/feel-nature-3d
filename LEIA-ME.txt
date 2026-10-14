@@ -1,10 +1,17 @@
-FEEL NATURE · DISPONIBILIDADE 3D (v3 · volumetria neutra)
+FEEL NATURE · DISPONIBILIDADE 3D (v5 · disponíveis em verde, reservadas em amarelo)
 
 ARQUIVOS
 - index.html ............ o site completo (prédio, preços, plantas)
 - api/disponibilidade.js  lê o mapa online da DTCX a cada minuto (disponibilidade ao vivo)
 - data/unidades.json .... tabela de preços (opcional; o index.html já traz a de out/26)
 
+STATUS NO SITE
+- Verde: disponível (preço, fluxo, planta)
+- Amarelo: reservada (planta e contato, sem preço)
+- Vendidas: só volume do prédio, sem clique e sem dados
+
 PUBLICAR NO GITHUB: suba os três itens mantendo as pastas (a pasta "api" na raiz).
 CONFERIR O AO VIVO: abra seu-site.vercel.app/api/disponibilidade
+  "metodo":"cor"   -> lê as cores da legenda do mapa (reservadas funcionam)
+  "metodo":"texto" -> lê imobiliária/data (reservadas não são separadas; envie o debug ao Claude)
 DIAGNÓSTICO: seu-site.vercel.app/api/disponibilidade?debug=1 (copie e envie ao Claude)

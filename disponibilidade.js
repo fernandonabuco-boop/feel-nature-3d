@@ -59,7 +59,9 @@ function parse(html) {
       let disponivel;
       if (legenda) disponivel = legenda === 'Não Vendida';
       else disponivel = !imob && !data;
-      unidades.push({ b, u, d: disponivel ? 1 : 0, s: legenda || (disponivel ? 'Não Vendida' : 'Indisponível') });
+      // st: d = disponível, r = reservada, v = vendida/indisponível (vendidas não expõem mais nada)
+      const st = disponivel ? 'd' : legenda === 'Reservada' ? 'r' : 'v';
+      unidades.push({ b, u, d: disponivel ? 1 : 0, st });
     }
   }
   // remove duplicadas (mantém a primeira ocorrência)
@@ -86,7 +88,7 @@ module.exports = async (req, res) => {
     const out = parse(html);
     if (out.unidades.length < 300) throw new Error('Leitura incompleta: ' + out.unidades.length + ' unidades');
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
-    res.status(200).json({ atualizado: new Date().toISOString(), fonte: 'Mapa online DTCX', metodo: out.metodo, disponiveis: out.unidades.filter((x) => x.d).length, unidades: out.unidades });
+    res.status(200).json({ atualizado: new Date().toISOString(), fonte: 'Mapa online DTCX', metodo: out.metodo, disponiveis: out.unidades.filter((x) => x.st === 'd').length, reservadas: out.unidades.filter((x) => x.st === 'r').length, unidades: out.unidades });
   } catch (e) {
     res.setHeader('Cache-Control', 'no-store');
     res.status(502).json({ erro: String(e.message || e) });
