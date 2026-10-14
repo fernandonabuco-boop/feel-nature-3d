@@ -1,22 +1,10 @@
-FEEL NATURE · DISPONIBILIDADE 3D (v2)
+FEEL NATURE · DISPONIBILIDADE 3D (v3 · volumetria neutra)
 
 ARQUIVOS
 - index.html ............ o site completo (prédio, preços, plantas)
 - api/disponibilidade.js  lê o mapa online da DTCX a cada minuto (disponibilidade ao vivo)
 - data/unidades.json .... tabela de preços (opcional; o index.html já traz a de out/26)
 
-PUBLICAR NO GITHUB
-Suba os três itens mantendo as pastas: a pasta "api" PRECISA ir junto, com esse nome,
-na raiz do repositório. O Vercel reconhece a pasta api sozinho, sem configuração.
-
-CONFERIR SE O "AO VIVO" ESTÁ FUNCIONANDO
-- Abra  seu-site.vercel.app/api/disponibilidade
-  Deve aparecer um texto começando com {"atualizado": ... e "disponiveis": um número.
-- No site, abaixo do total, aparece "Ao vivo · mapa online atualizado às HH:MM".
-  Se aparecer "Disponibilidade da tabela...", a leitura do mapa falhou e o site usa a tabela.
-- Diagnóstico: seu-site.vercel.app/api/disponibilidade?debug=1 (copie o texto e envie ao Claude).
-
-PREÇOS
-O status vem do mapa online em tempo real. Os preços continuam vindo da tabela.
-Unidade que volte a ficar disponível sem preço na tabela aparece como "Preço sob consulta".
-Para tabela nova: substitua data/unidades.json.
+PUBLICAR NO GITHUB: suba os três itens mantendo as pastas (a pasta "api" na raiz).
+CONFERIR O AO VIVO: abra seu-site.vercel.app/api/disponibilidade
+DIAGNÓSTICO: seu-site.vercel.app/api/disponibilidade?debug=1 (copie e envie ao Claude)
