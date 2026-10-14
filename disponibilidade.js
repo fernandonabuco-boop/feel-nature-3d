@@ -39,6 +39,40 @@ function tokens(html) {
 }
 const TIPO = /^(COB |GD )?1Q$/i, DATA = /^\d{2}\/\d{2}\/\d{4}$/, UNID = /^\d{3}$/;
 
+// ---------- Leitura principal: estrutura real do mapa DTCX ----------
+// Cada unidade é um <div class="my-card ..." style="background-color:#COR;"> com <div class="card-numero">601</div>,
+// dentro de <h2 class="titulo-bloco">BLOCO 0X</h2>. A legenda (nome + cor de cada situação) vem em var STATS_DATA.status_map.
+// Regra de acesso no site: 1 = disponível (com preço) · 2, 3, 5 = clicável sem preço · demais = sem acesso.
+const ACESSO_PRECO = ['1'];
+const ACESSO_BASICO = ['2', '3', '5'];
+const acesso = (id) => (ACESSO_PRECO.includes(id) ? 'd' : ACESSO_BASICO.includes(id) ? 'r' : 'v');
+
+function parseDTCX(html) {
+  const m = html.match(/var\s+STATS_DATA\s*=\s*(\{[\s\S]*?\});\s*(?:\n|<\/script>|var\s)/);
+  if (!m) return null;
+  let stats; try { stats = JSON.parse(m[1]); } catch (e) { return null; }
+  const map = stats.status_map || {};
+  const porCor = {};
+  for (const id in map) porCor[norm(map[id].cor)] = id;
+  const blocos = [...html.matchAll(/<h2[^>]*titulo-bloco[^>]*>\s*BLOCO\s*0?(\d)\s*<\/h2>/gi)].map((x) => ({ i: x.index, b: +x[1] }));
+  const re = /<div class="my-card[^"]*"\s+style="background-color:\s*(#[0-9a-f]{3,8})\s*;?"([^>]*)>[\s\S]*?<div class="card-numero">\s*(\d{3})\s*<\/div>/gi;
+  const unidades = []; const vistos = new Set();
+  for (const x of html.matchAll(re)) {
+    const bl = blocos.filter((k) => k.i < x.index).pop();
+    if (!bl) continue;
+    const key = bl.b + '-' + x[3];
+    if (vistos.has(key)) continue; vistos.add(key);
+    const id = porCor[norm(x[1])] || null;
+    const conteudo = (x[2].match(/data-bs-content="([^"]*)"/) || [])[1] || '';
+    const pos = (decode(conteudo.replace(/&lt;/g, '<').replace(/&gt;/g, '>')).match(/Posi[çc][ãa]o:<\/strong>\s*([A-Za-zÀ-ú]+)/) || [])[1] || null;
+    const st = id ? acesso(id) : 'v';
+    unidades.push({ b: bl.b, u: x[3], s: id, st, d: st === 'd' ? 1 : 0, pos });
+  }
+  const status = {};
+  for (const id in map) status[id] = { nome: map[id].nome, cor: map[id].cor, acesso: acesso(id) };
+  return { unidades, status, metodo: 'dtcx', total: stats.total, geral: stats.geral };
+}
+
 function parse(html) {
   // mapa de cores da legenda (se a página usar cor inline)
   const corLegenda = {};
@@ -107,13 +141,16 @@ module.exports = async (req, res) => {
       res.status(200).send(html.slice(Math.max(0, i - 1500), i + 600) + '\n\n----- LEGENDA -----\n' + html.slice(Math.max(0, html.indexOf('Não Vendida') - 800), html.indexOf('Não Vendida') + 300));
       return;
     }
-    const out = parse(html);
+    const out = parseDTCX(html) || parse(html);
     if (out.unidades.length < 300) throw new Error('Leitura incompleta: ' + out.unidades.length + ' unidades');
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
-    res.status(200).json({ atualizado: new Date().toISOString(), fonte: 'Mapa online DTCX', metodo: out.metodo, disponiveis: out.unidades.filter((x) => x.st === 'd').length, reservadas: out.unidades.filter((x) => x.st === 'r').length, unidades: out.unidades });
+    // as vendidas/indisponíveis saem só com bloco, número e situação (sem posição)
+    const unidades = out.unidades.map((x) => (x.st === 'v' ? { b: x.b, u: x.u, s: x.s, st: 'v', d: 0 } : x));
+    res.status(200).json({ atualizado: new Date().toISOString(), fonte: 'Mapa online DTCX', metodo: out.metodo, disponiveis: unidades.filter((x) => x.st === 'd').length, reservadas: unidades.filter((x) => x.st === 'r').length, status: out.status || null, unidades });
   } catch (e) {
     res.setHeader('Cache-Control', 'no-store');
     res.status(502).json({ erro: String(e.message || e) });
   }
 };
 module.exports.parse = parse;
+module.exports.parseDTCX = parseDTCX;
