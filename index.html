@@ -117,6 +117,9 @@ input[type=range] { width: 100%; accent-color: var(--leaf); }
 .tags li.st-d { background: var(--leaf); color: var(--leaf-ink); font-weight: 600; }
 .tags li.st-r { background: var(--res); color: #2a2205; font-weight: 600; }
 #hero-stat .res, #tip .resv { color: var(--res); font-weight: 600; }
+.aviso { margin: 18px 0 0; padding: 12px 13px; border-radius: 10px; border: 1px solid var(--line); background: rgba(236, 230, 216, .05); font-size: 11.5px; line-height: 1.5; color: var(--muted); }
+.aviso strong { display: block; margin-bottom: 4px; color: var(--fg); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+.legal strong { color: var(--fg); font-weight: 600; }
 .res-note { margin: 18px 0 0; padding: 10px 12px; border-radius: 9px; background: rgba(242,201,76,.14); color: var(--res); font-size: 12.5px; line-height: 1.45; }
 .r-res { color: var(--res); font-weight: 600; }
 .ghost-cta { background: transparent; color: var(--fg); border: 1px solid var(--line); }
@@ -251,7 +254,7 @@ body.ready #loader { opacity: 0; visibility: hidden; }
     <button id="btn-filtros">Unidades · <span id="count-m">0</span></button>
     <p id="tabela"></p>
   </div>
-  <p class="legal">Imagens e volumetria ilustrativas. Posições, áreas e orientação conforme ficha técnica e book do empreendimento. Preços sujeitos a alteração sem aviso. Memorial de Incorporação registrado no Registro de Imóveis competente.</p>
+  <p class="legal"><strong>Aviso:</strong> informações geradas e atualizadas automaticamente, com apoio de inteligência artificial, e sujeitas a divergências. Não constituem oferta, proposta ou reserva. Antes de ofertar qualquer unidade, confirme disponibilidade, valores e condições com a equipe comercial da Calper. Imagens, volumetria e plantas ilustrativas.</p>
 
   <div id="tip" hidden></div>
   <div id="lightbox" hidden><img id="lb-img" alt="Planta ampliada"></div>
@@ -3999,6 +4002,7 @@ for (int b = 0; b < 4; b++) {
       <li>${t.sol}</li><li>${t.lado}</li>${n?`<li>${n}</li>`:""}
     </ul>
     ${o}
+    <div class="aviso" role="note"><strong>Aviso importante</strong>As informa\xE7\xF5es deste painel (disponibilidade, pre\xE7os, \xE1reas, plantas e condi\xE7\xF5es de pagamento) s\xE3o geradas e atualizadas de forma automatizada, com apoio de intelig\xEAncia artificial, a partir do mapa de vendas e da tabela vigente, e podem conter diverg\xEAncias, erros ou atrasos de atualiza\xE7\xE3o. T\xEAm car\xE1ter exclusivamente informativo e ilustrativo, n\xE3o constituem oferta, proposta, promessa ou reserva de unidade e n\xE3o geram obriga\xE7\xE3o para a Calper ou para a incorporadora. <b>Antes de ofertar, negociar ou reservar esta unidade, confirme disponibilidade, valores e condi\xE7\xF5es com a equipe comercial da Calper.</b> Prevalecem sempre a tabela de vendas oficial, o memorial de incorpora\xE7\xE3o registrado e o contrato.</div>
     <div class="plantas">
       ${s.length>1?`<div class="pl-tabs">${s.map(([h],u)=>`<button class="seg${u?"":" on"}" data-pl="${u}">${h}</button>`).join("")}</div>`:'<p class="label">Planta</p>'}
       <button class="pl-img" id="pl-open" aria-label="Ampliar planta"><img id="pl-img" src="${_d(s[0][1])}" alt="Planta ${ws[i.tipo].nome}, unidade ${i.u}" loading="lazy"></button>
