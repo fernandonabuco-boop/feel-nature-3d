@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2315110d'/%3E%3Cpath d='M9 6v20M13 6v20M17 6v20M21 6v20' stroke='%23c48a52' stroke-width='2.4'/%3E%3C/svg%3E">
+<style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Arte Wood 3D</title>
+<meta name="description" content="Disponibilidade em 3D do Arte Wood · Cidade Arte. Unidades disponíveis, tipologias, áreas, preços e fluxo de pagamento.">
+<meta name="theme-color" content="#15110d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: cena 3D em tela cheia; marca no topo, filtros à esquerda, ficha da unidade à direita (bottom sheets no celular). Visual único, escuro, de madeira à noite. */
+:root {
+  color-scheme: dark;
+  --bg: #15110d;           /* nogueira à noite */
+  --panel: rgba(27, 22, 17, 0.9);
+  --panel-solid: #1c1712;
+  --fg: #f0e6d7;           /* carvalho claro */
+  --muted: #a9998a;
+  --line: rgba(240, 230, 215, 0.12);
+  --wood: #c48a52;         /* ripado de madeira */
+  --honey: #f2b866;        /* disponível */
+  --honey-ink: #2c1b06;
+  --sel: #8cc4ff;          /* selecionada */
+  --sold: #3b332b;         /* vendida */
+  --res: #e6dccb;          /* reservada */
+  --f-display: 'Urbanist', 'Futura', 'Century Gothic', system-ui, sans-serif;
+  --f-body: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --r: 14px;
+}
+html, body { height: 100%; overflow: hidden; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-body); font-size: 14px; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--honey); outline-offset: 2px; }
+#app { position: relative; height: 100%; width: 100%; overflow: hidden; }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+#labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.tag3d { position: absolute; left: 0; top: 0; font-family: var(--f-display); font-weight: 600; letter-spacing: .24em; text-transform: uppercase; font-size: 11px; color: var(--fg); background: rgba(21, 17, 13, .78); padding: 5px 9px 4px; border-radius: 4px; white-space: nowrap; }
+.tag3d span { color: var(--honey); margin-left: 6px; letter-spacing: .05em; }
+.tag3d.street { background: none; color: var(--muted); font-size: 10px; font-weight: 400; }
+.tag3d.sun { background: none; color: var(--wood); text-shadow: 0 1px 6px rgba(0,0,0,.8); }
+body.has-unit .tag3d.street, body.has-unit .tag3d.sun { opacity: 0 !important; }
+.addr { margin: 4px 0 0; color: var(--muted); font-size: 12.5px; }
+.addr a { color: var(--fg); pointer-events: auto; text-underline-offset: 3px; }
+
+.brand { position: absolute; top: calc(18px + env(safe-area-inset-top, 0px)); left: calc(20px + env(safe-area-inset-left, 0px)); z-index: 3; max-width: min(520px, calc(100% - 40px)); pointer-events: none; }
+.logo { font-family: var(--f-display); text-transform: uppercase; line-height: 1; margin: 0; }
+.logo .k { display: block; font-size: 11px; font-weight: 400; letter-spacing: .5em; color: var(--muted); }
+.logo .n { display: block; font-size: 38px; font-weight: 300; letter-spacing: .32em; margin-top: 6px; }
+.logo img { display: block; width: 250px; height: auto; margin-top: 10px; }
+#hero-stat { margin: 14px 0 0; font-size: 14px; line-height: 1.5; }
+#hero-stat b { font-weight: 600; color: var(--honey); font-variant-numeric: tabular-nums; }
+.live { display: inline-flex; align-items: center; gap: 7px; margin: 6px 0 0; font-size: 11.5px; color: var(--muted); }
+.live::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--honey); animation: pulse 2s infinite; }
+.live.off::before { background: var(--muted); animation: none; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(242,184,102,.6); } 70% { box-shadow: 0 0 0 7px rgba(242,184,102,0); } 100% { box-shadow: 0 0 0 0 rgba(242,184,102,0); } }
+
+.panel { background: var(--panel); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: var(--r); }
+#filters { position: absolute; z-index: 4; left: calc(20px + env(safe-area-inset-left, 0px)); top: 228px; bottom: 76px; width: 330px; display: flex; flex-direction: column; overflow: hidden; }
+.f-head { display: flex; align-items: baseline; justify-content: space-between; padding: 16px 16px 4px; gap: 8px; }
+.f-head h2 { margin: 0; font-size: 13px; font-weight: 600; }
+.f-head h2 span { color: var(--honey); font-variant-numeric: tabular-nums; }
+.link { font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+#filters-close { display: none; }
+.f-body { padding: 8px 16px 12px; display: grid; gap: 14px; border-bottom: 1px solid var(--line); }
+.label { margin: 0 0 7px; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); font-size: 12.5px; color: var(--muted); display: inline-flex; gap: 6px; align-items: baseline; }
+.chip span { font-size: 11px; font-variant-numeric: tabular-nums; opacity: .8; }
+.chip:hover { border-color: rgba(242,184,102,.5); }
+.chip.on { background: var(--honey); color: var(--honey-ink); border-color: var(--honey); font-weight: 500; }
+.segs { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg { flex: 1; padding: 7px 0; font-size: 12px; color: var(--muted); border-right: 1px solid var(--line); }
+.seg:last-child { border-right: 0; }
+.seg.on { background: rgba(242, 184, 102, .16); color: var(--fg); font-weight: 600; }
+.range-row { display: flex; justify-content: space-between; align-items: baseline; }
+#f-preco-v { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+input[type=range] { width: 100%; accent-color: var(--honey); }
+#list { overflow-y: auto; flex: 1; padding: 6px 8px 10px; min-height: 0; }
+.row { width: 100%; display: grid; grid-template-columns: 58px 1fr auto; gap: 10px; align-items: center; text-align: left; padding: 9px 8px; border-radius: 9px; }
+.row:hover { background: rgba(240, 230, 215, .06); }
+.row.sel { background: rgba(140, 196, 255, .14); }
+.row small { display: block; font-size: 11px; color: var(--muted); margin-top: 1px; }
+.r-id b { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.r-tipo { font-size: 12.5px; min-width: 0; }
+.r-preco { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--honey); }
+.empty { color: var(--muted); padding: 12px 8px; margin: 0; line-height: 1.5; }
+
+#unit { position: absolute; z-index: 5; right: calc(20px + env(safe-area-inset-right, 0px)); top: 72px; bottom: 76px; width: 380px; overflow-y: auto; padding: 20px 20px 22px; }
+#unit-close { position: sticky; top: 0; float: right; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-solid); font-size: 18px; line-height: 1; margin: -6px -6px 0 0; }
+.eyebrow { margin: 0; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.u-num { margin: 6px 0 0; font-family: var(--f-display); font-weight: 300; font-size: 58px; letter-spacing: .06em; line-height: 1; font-variant-numeric: tabular-nums; }
+.u-tipo { margin: 8px 0 0; font-size: 15px; }
+.u-tipo span { color: var(--muted); }
+.tags { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.tags li { font-size: 11.5px; padding: 4px 9px; border-radius: 6px; background: rgba(240, 230, 215, .07); color: var(--muted); }
+.tags li.st-d { background: var(--honey); color: var(--honey-ink); font-weight: 600; }
+.tags li.st-r { background: var(--res); color: #2a2318; font-weight: 600; }
+.tags li.st-v { background: var(--sold); color: var(--fg); font-weight: 600; }
+.price { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); }
+.price small { display: block; font-size: 11px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.price strong { font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.price .m2 { display: block; margin-top: 2px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.fluxo { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.fluxo th { text-align: left; font-weight: 500; color: var(--muted); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; padding: 0 0 6px; }
+.fluxo th:nth-child(n+2), .fluxo td:nth-child(n+2) { text-align: right; }
+.fluxo td { padding: 8px 0; border-top: 1px solid var(--line); vertical-align: top; }
+.fluxo td small { display: block; color: var(--muted); font-size: 11px; }
+.fluxo td:nth-child(2) { color: var(--muted); padding-right: 10px; }
+.cta { display: block; width: 100%; margin-top: 16px; text-align: center; background: var(--honey); color: var(--honey-ink); font-weight: 600; padding: 13px; border-radius: 11px; }
+.cta:hover { filter: brightness(1.07); }
+.sold { margin-top: 20px; padding: 14px; border-radius: 11px; background: rgba(240, 230, 215, .06); color: var(--muted); font-size: 13px; line-height: 1.5; }
+.note { margin: 10px 0 0; font-size: 11px; color: var(--muted); line-height: 1.45; }
+.plantas { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
+.pl-tabs { display: flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 8px 0 10px; }
+.pl-img { display: block; width: 100%; padding: 8px; background: #fbfaf7; border-radius: 10px; cursor: zoom-in; }
+.pl-img img { display: block; width: 100%; height: auto; max-height: 460px; object-fit: contain; }
+#lightbox { position: fixed; inset: 0; z-index: 21; background: rgba(12, 9, 7, .94); display: grid; place-items: center; padding: max(16px, env(safe-area-inset-left, 0px)); cursor: zoom-out; }
+#lightbox img { max-width: 100%; max-height: 100%; background: #fbfaf7; border-radius: 10px; padding: 12px; }
+.poi { position: absolute; left: 0; top: 0; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--honey); color: var(--honey-ink); font: 600 11px/22px var(--f-body); text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,.5); pointer-events: auto; cursor: pointer; transition: transform .15s; font-variant-numeric: tabular-nums; }
+.poi:hover, .poi.on { transform: scale(1.35); background: var(--fg); }
+body:not(.lazer-on) .poi { display: none; }
+#lazer { position: absolute; z-index: 5; right: calc(20px + env(safe-area-inset-right, 0px)); top: 72px; bottom: 76px; width: 340px; overflow-y: auto; padding: 18px 18px 20px; }
+#lazer h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 13px; letter-spacing: .2em; text-transform: uppercase; }
+#lazer ol { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 2px; }
+#lazer li button { width: 100%; display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: center; text-align: left; padding: 6px 6px; border-radius: 8px; font-size: 13px; }
+#lazer li button:hover, #lazer li button.on { background: rgba(240,230,215,.08); }
+#lazer li b { width: 22px; height: 22px; border-radius: 50%; background: var(--honey); color: var(--honey-ink); font-size: 11px; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums; }
+#lazer .note { margin-top: 12px; }
+body.has-unit #lazer { display: none; }
+#copy-out { width: 100%; margin-top: 10px; min-height: 140px; background: var(--panel-solid); color: var(--fg); border: 1px solid var(--line); border-radius: 9px; padding: 10px; font: 12px/1.5 var(--f-body); }
+
+.bottom { position: absolute; z-index: 6; left: calc(20px + env(safe-area-inset-left, 0px)); right: calc(20px + env(safe-area-inset-right, 0px)); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; justify-content: space-between; align-items: center; gap: 12px; pointer-events: none; }
+.bottom > * { pointer-events: auto; }
+.legend { display: flex; gap: 14px; padding: 9px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; gap: 7px; align-items: center; }
+.legend i { width: 11px; height: 11px; border-radius: 3px; }
+#views { display: flex; padding: 4px; gap: 2px; }
+#views button { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; color: var(--muted); }
+#views button:hover { color: var(--fg); background: rgba(240, 230, 215, .07); }
+#btn-ripado[aria-pressed=true] { color: var(--wood); }
+#gal { position: fixed; inset: 0; z-index: 20; background: rgba(12, 9, 7, .94); display: grid; grid-template-rows: 1fr auto; padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); gap: 12px; }
+#gal img { width: 100%; height: 100%; object-fit: contain; min-height: 0; }
+#gal .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+#gal .bar button { border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; color: var(--fg); }
+#gal .bar button:hover { border-color: var(--wood); }
+#tabela { margin: 0; font-size: 11px; color: var(--muted); max-width: 300px; text-align: right; line-height: 1.4; }
+#btn-filtros { display: none; }
+
+#tip { position: fixed; left: 0; top: 0; z-index: 9; pointer-events: none; background: var(--panel-solid); border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px; font-size: 12.5px; line-height: 1.5; }
+#tip b { font-size: 14px; font-variant-numeric: tabular-nums; }
+#tip em { font-style: normal; color: var(--honey); font-weight: 600; }
+#tip .muted { color: var(--muted); }
+
+#loader { position: absolute; inset: 0; z-index: 10; background: var(--bg) url('img/vista-dois-blocos.webp') center/cover; display: grid; place-items: end start; padding: 32px; transition: opacity 1s ease .4s, visibility 0s linear 1.4s; }
+#loader::before { content: ''; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(21,17,13,.92), rgba(21,17,13,.15) 60%); }
+#loader p { position: relative; margin: 0; font-family: var(--f-display); letter-spacing: .4em; text-transform: uppercase; font-size: 12px; color: var(--fg); }
+body.ready #loader { opacity: 0; visibility: hidden; }
+.legal { position: absolute; z-index: 2; left: 20px; right: 20px; bottom: 3px; margin: 0; font-size: 9.5px; color: rgba(169, 153, 138, .7); text-align: center; pointer-events: none; }
+
+@media (max-width: 1100px) { #unit { width: 340px; } #filters { width: 300px; } #tabela { display: none; } }
+@media (max-width: 760px) {
+  .logo img { width: 170px; }
+  .logo .k { font-size: 9px; }
+  #hero-stat { font-size: 12.5px; margin-top: 10px; }
+  .addr, .tag3d.street, .tag3d.sun { display: none; }
+  .brand { left: 16px; top: calc(14px + env(safe-area-inset-top, 0px)); }
+  #filters { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 72%; border-radius: 18px 18px 0 0; transform: translateY(105%); transition: transform .3s ease; padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body.filters-open #filters { transform: none; }
+  #filters-close { display: inline; margin-left: 12px; }
+  #unit { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 64%; border-radius: 18px 18px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom, 0px)); }
+  .bottom { left: 16px; right: 16px; flex-wrap: wrap; justify-content: center; }
+  .legend { display: none; }
+  #btn-filtros { display: block; background: var(--honey); color: var(--honey-ink); font-weight: 600; padding: 10px 16px; border-radius: 999px; }
+  #views { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  #views button { padding: 7px 9px; white-space: nowrap; flex: none; }
+  body.has-unit .bottom, body.has-unit #labels, body.filters-open #labels { display: none; }
+  .legal { display: none; }
+  #lazer { left: 0; right: 0; top: auto; bottom: 0; width: auto; max-height: 60%; border-radius: 18px 18px 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <canvas id="scene" aria-label="Modelo 3D do Arte Wood com as unidades disponíveis destacadas"></canvas>
+  <div id="labels"></div>
+
+  <header class="brand">
+    <h1 class="logo"><span class="k">Cidade Arte · Barra</span><img src="img/logo-arte-wood.png" alt="Arte Wood Residences" width="900" height="210"></h1>
+    <p id="hero-stat">Carregando disponibilidade…</p>
+    <p id="live" class="live off">Conectando ao mapa de vendas…</p>
+    <p class="addr">Av. Antônio Gallotti, 920 · Barra Olímpica · Stand: Av. Ator José Wilker, 600 · <a href="https://www.artewoodbarra.com.br" target="_blank" rel="noopener">artewoodbarra.com.br</a></p>
+  </header>
+
+  <aside id="filters" class="panel" aria-label="Filtros e unidades disponíveis">
+    <div class="f-head">
+      <h2><span id="count">0</span> unidades no filtro</h2>
+      <div><button class="link" id="f-limpar">Limpar filtros</button><button class="link" id="filters-close">Fechar</button></div>
+    </div>
+    <div class="f-body">
+      <div><p class="label">Tipologia</p><div class="chips" id="f-tipos"></div></div>
+      <div><p class="label">Bloco</p><div class="chips" id="f-blocos"></div></div>
+      <div><p class="label">Pavimento · corta o prédio</p><div class="segs" id="f-andar"></div></div>
+      <div>
+        <div class="range-row"><p class="label">Preço máximo</p><span id="f-preco-v"></span></div>
+        <input type="range" id="f-preco" aria-label="Preço máximo">
+      </div>
+    </div>
+    <div id="list"></div>
+  </aside>
+
+  <section id="unit" class="panel" hidden aria-live="polite">
+    <button id="unit-close" aria-label="Fechar ficha da unidade">×</button>
+    <div id="unit-body"></div>
+  </section>
+
+  <div class="bottom">
+    <div class="legend panel">
+      <span><i style="background:var(--honey)"></i>Disponível</span>
+      <span><i style="background:var(--res)"></i>Reservada</span>
+      <span><i style="background:var(--sel)"></i>Selecionada</span>
+      <span><i style="background:var(--sold)"></i>Vendida ou fora de venda</span>
+    </div>
+    <div id="views" class="panel" role="group" aria-label="Vistas">
+      <button data-view="geral">Geral</button>
+      <button data-view="norte">Avenida 1</button>
+      <button data-view="sul">Rua 2.5.1</button>
+      <button data-view="topo">Implantação</button>
+      <button id="btn-lazer" aria-pressed="false">Lazer</button>
+      <button id="btn-ripado" aria-pressed="true">Ripado</button>
+      <button id="btn-renders">Renders</button>
+    </div>
+    <button id="btn-filtros">Unidades · <span id="count-m">0</span></button>
+    <p id="tabela"></p>
+  </div>
+  <p class="legal">Volumetria ilustrativa, baseada na ficha técnica (jan/2026): implantação, numeração das unidades e cotas do corte esquemático. Preços e condições conforme tabela vigente, sujeitos a alteração sem aviso.</p>
+
+  <aside id="lazer" class="panel" hidden aria-label="Lazer do PUC">
+    <button id="lazer-close" class="link" style="float:right">Fechar</button>
+    <h2>Lazer do PUC</h2>
+    <ol id="lazer-list"></ol>
+    <p class="note">Toque num item para localizar no pátio. *Serviço opcional contratado por pay-per-use. Fonte: book Arte Wood (jan/2026).</p>
+  </aside>
+  <div id="lightbox" hidden><img id="lb-img" alt="Planta ampliada"></div>
+  <div id="tip" hidden></div>
+  <div id="gal" hidden role="dialog" aria-label="Renders do Arte Wood">
+    <img id="gal-img" alt="">
+    <div class="bar"><button id="gal-prev" aria-label="Anterior">‹</button><span id="gal-cap"></span><span><button id="gal-next" aria-label="Próximo">›</button> <button id="gal-close">Fechar</button></span></div>
+  </div>
+  <div id="loader"><p>Carregando o Arte Wood</p></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const DATA = await fetch('data/unidades.json', { cache: 'no-store' }).then(r => r.json());
+const $ = s => document.querySelector(s);
+const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+const brlK = v => 'R$ ' + (v / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' mil';
+const m2 = a => a.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) + ' m²';
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+
+/* ---------- implantação (ficha técnica jan/2026) ----------
+   Eixos em metros: +X = leste (Rua 2.5.2), -X = oeste (Av. Antonio Gallotti), -Z = norte (Avenida 1), +Z = sul (Rua 2.5.1).
+   Blocos em cata-vento ao redor do pátio do PUC. Numeração das unidades conforme a planta do pavimento-tipo. */
+const GD24 = [...range(1, 14), 17, 18, 19, 22, 23, 24];   // PUC dos blocos 1 e 3: 20 unidades
+const GD14 = [...range(1, 10), 12, 13];                    // PUC dos blocos 2 e 4: 12 unidades
+const DEPTH = 5.4, CORR = 1.2, D = DEPTH * 2 + CORR;   // ~12 m de lâmina, medido no masterplan do PUC
+const BLOCKS = {
+  1: { cx: -13.8, cz: 42.2, axis: 'x', per: 24, W: 4.8, out: [0, 1], kind: 'Lojas', gd: GD24,
+       pos: k => k === 1 ? [0, 'in'] : k >= 14 ? [25 - k, 'in'] : [k - 2, 'out'] },
+  2: { cx: 37.4, cz: 15.2, axis: 'z', per: 14, W: 9.1, out: [1, 0], kind: 'Lojas', gd: GD14,
+       pos: k => k >= 10 ? [k - 10, 'in'] : k === 1 ? [5, 'in'] : k === 2 ? [6, 'in'] : [9 - k, 'out'] },
+  3: { cx: 13.9, cz: -41.4, axis: 'x', per: 24, W: 4.8, out: [0, -1], kind: 'Townhouses', gd: GD24,
+       pos: k => k === 1 ? [11, 'in'] : k >= 14 ? [k - 14, 'in'] : [13 - k, 'out'] },
+  4: { cx: -37.3, cz: -13.9, axis: 'z', per: 14, W: 8.9, out: [-1, 0], kind: 'Townhouses', gd: GD14,
+       pos: k => k === 2 ? [0, 'in'] : k === 1 ? [1, 'in'] : k >= 10 ? [16 - k, 'in'] : [k - 3, 'out'] },
+};
+for (const B of Object.values(BLOCKS)) B.L = (B.per / 2) * B.W;
+// cotas do corte esquemático
+const floorY = f => f === 1 ? 0 : f === 2 ? 6.93 : 10.05 + (f - 3) * 2.72;
+const floorH = f => f === 1 ? 6.4 : f === 2 ? 2.9 : 2.5;
+const FLOORS = range(1, 12);
+const PAV = { todos: [1, 12], terreo: [1, 1], garden: [2, 2], tipo: [3, 11], cob: [12, 12] };
+const PAV_LABEL = { todos: 'Todos', terreo: 'Térreo', garden: 'PUC', tipo: 'Tipo', cob: 'Cobertura' };
+const floorName = (f, b) => f === 1 ? `Térreo · ${BLOCKS[b].kind === 'Lojas' ? 'loja' : 'townhouse'}` : f === 2 ? 'PUC · Up Garden · +6,93' : f === 12 ? 'Cobertura duplex · +34,53 / +37,25' : `${f}º pavimento · +${floorY(f).toFixed(2).replace('.', ',')}`;
+
+const avail = new Map(DATA.unidades.map(u => [u.b + '-' + u.u, u]));
+const pretty = t => {
+  const [base, v] = t.split(' - ');
+  const baseMap = { 'LOJA': 'Loja', 'STUDIO': 'Studio', 'DOUBLE SUITES': 'Double Suites', '2 QUARTOS': '2 quartos', '3 QUARTOS': '3 quartos' };
+  const vMap = { 'UP GARDEN': 'Up Garden', 'COBERTURA': 'Cobertura', 'TOWNHOUSE': 'Townhouse' };
+  return { base: baseMap[base] || base, variant: v ? (vMap[v] || v) : '' };
+};
+DATA.unidades.forEach(u => Object.assign(u, pretty(u.t), { f: Math.floor(+u.u / 100) }));
+
+const units = [];
+const push = (b, f, k, x, z, sx, sz, nx, nz) => {
+  const id = String(f * 100 + k);
+  units.push({ b, f, k, id, x, z, sx, sz, nx, nz, a: avail.get(b + '-' + id) || null });
+};
+// apartamentos: PUC, tipo e cobertura
+for (const [bk, B] of Object.entries(BLOCKS)) {
+  const b = +bk;
+  const slot = (f, k) => {
+    const [i, side] = B.pos(k);
+    const along = -B.L / 2 + B.W / 2 + i * B.W;
+    const s = side === 'out' ? 1 : -1, off = s * (CORR / 2 + DEPTH / 2);
+    const [ox, oz] = B.out;
+    if (B.axis === 'x') push(b, f, k, B.cx + along, B.cz + oz * off, B.W - 0.35, DEPTH - 0.5, 0, oz * s);
+    else push(b, f, k, B.cx + ox * off, B.cz + along, DEPTH - 0.5, B.W - 0.35, ox * s, 0);
+  };
+  B.gd.forEach(k => slot(2, k));
+  for (let f = 3; f <= 12; f++) for (let k = 1; k <= B.per; k++) slot(f, k);
+}
+// térreo: lojas e townhouses no perímetro do embasamento (planta do térreo)
+const E = { w: -43.5, e: 43.5, n: -52.1, s: 52.1, t: 8 };
+function strip(b, ks, x0, x1, z0, z1, nx, nz) {
+  const n = ks.length, alongX = Math.abs(x1 - x0) > Math.abs(z1 - z0);
+  ks.forEach((k, i) => {
+    if (alongX) { const w = (x1 - x0) / n; push(b, 1, k, x0 + w * (i + .5), (z0 + z1) / 2, w - .35, Math.abs(z1 - z0) - .4, nx, nz); }
+    else { const h = (z1 - z0) / n; push(b, 1, k, (x0 + x1) / 2, z0 + h * (i + .5), Math.abs(x1 - x0) - .4, h - .35, nx, nz); }
+  });
+}
+strip(3, range(1, 14), E.w, E.e - E.t, E.n, E.n + E.t, 0, -1);                 // townhouses 101–114, face norte
+strip(3, [15, 16, 17], E.e - E.t, E.e, E.n + E.t, -18.7, 1, 0);                       // townhouses 115–117, esquina NE
+strip(4, [6, 5, 4, 3, 2, 1], E.w, E.w + E.t, E.n + E.t, 8.3, -1, 0);                        // townhouses 101–106, face oeste
+strip(2, [10, 9, 8, 7, 6, 5, 4, 3, 2, 1], E.e - E.t, E.e, -18.7, E.s - E.t, 1, 0);   // lojas 101–110, face leste
+strip(1, range(1, 14), E.w, E.e - E.t, E.s - E.t, E.s, 0, 1);                        // lojas 101–114, face sul
+strip(1, [15], E.e - E.t, E.e, E.s - E.t, E.s, 0, 1);                                // loja 115, esquina SE
+// confere: toda unidade da tabela precisa existir na grade
+const gridIds = new Set(units.map(u => u.b + '-' + u.id));
+const orphans = DATA.unidades.filter(u => !gridIds.has(u.b + '-' + u.u));
+if (orphans.length) console.warn('Unidades da tabela fora da grade:', orphans.map(u => u.b + '-' + u.u));
+
+/* ---------- cena ---------- */
+const canvas = $('#scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.15;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#15110d');
+scene.fog = new THREE.Fog('#15110d', 160, 320);
+const camera = new THREE.PerspectiveCamera(38, 1, 1, 1000);
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 30; controls.maxDistance = 260;
+
+scene.add(new THREE.HemisphereLight('#dfe8ff', '#3a2a1c', 1.4));
+const sun = new THREE.DirectionalLight('#ffd9a8', 2.4); sun.position.set(-80, 110, 60); scene.add(sun);
+const fill = new THREE.DirectionalLight('#9fb4d9', .6); fill.position.set(90, 60, -80); scene.add(fill);
+
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: '#1d1813', roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.05; scene.add(ground);
+const flat = (w, d, color, x, y, z) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color, roughness: 1 })); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); scene.add(m); return m; };
+// calçadas e ruas no entorno
+flat(E.e - E.w + 24, E.s - E.n + 24, '#2a241e', 0, 0, 0);
+// embasamento (garagem e jirau) e laje do PUC
+const podium = new THREE.Mesh(new THREE.BoxGeometry(E.e - E.w - 2 * E.t, 6.6, E.s - E.n - 2 * E.t), new THREE.MeshStandardMaterial({ color: '#2f2821', roughness: .95 }));
+podium.position.set(0, 3.3, 0); scene.add(podium);
+const deck = new THREE.Group(); scene.add(deck);
+const deckSlab = new THREE.Mesh(new THREE.BoxGeometry(E.e - E.w, .3, E.s - E.n), new THREE.MeshStandardMaterial({ color: '#4a3b2c', roughness: .9 }));
+deckSlab.position.set(0, 6.78, 0); deck.add(deckSlab);
+const pucTex = new THREE.TextureLoader().load('img/puc.webp', t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); });
+const puc = new THREE.Mesh(new THREE.PlaneGeometry(E.e - E.w, E.s - E.n), new THREE.MeshStandardMaterial({ map: pucTex, roughness: .95 }));
+puc.rotation.x = -Math.PI / 2; puc.position.set(0, 6.95, 0); deck.add(puc);
+// água das piscinas com leve brilho por cima da textura
+[[-2.1, -1.9, 7.2, 13.2], [7.5, 5.3, 6, 21.6], [6, -11.4, 9, 5.8], [-2.1, 8.9, 7.2, 3.6], [-0.9, -21.4, 8.4, 3], [28.8, -24.8, 3, 3.6]].forEach(([x, z, w, d]) => {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshStandardMaterial({ color: '#5fb3c6', roughness: .08, metalness: .1, transparent: true, opacity: .35 }));
+  m.rotation.x = -Math.PI / 2; m.position.set(x, 6.98, z); deck.add(m);
+});
+
+const MAT = {
+  sold: new THREE.MeshStandardMaterial({ color: '#8f9aa1', emissive: '#2a3036', emissiveIntensity: .5, roughness: .25, metalness: .15 }),
+  avail: new THREE.MeshStandardMaterial({ color: '#f2b866', emissive: '#d08a32', emissiveIntensity: .75, roughness: .4 }),
+  dim: new THREE.MeshStandardMaterial({ color: '#6e5638', emissive: '#3a2610', emissiveIntensity: .35, roughness: .5, transparent: true, opacity: .7 }),
+  res: new THREE.MeshStandardMaterial({ color: '#e6dccb', emissive: '#6d6352', emissiveIntensity: .45, roughness: .5 }),
+  ghost: new THREE.MeshStandardMaterial({ color: '#3b332b', transparent: true, opacity: .12, depthWrite: false }),
+  sel: new THREE.MeshStandardMaterial({ color: '#8cc4ff', emissive: '#3a78c2', emissiveIntensity: .9 }),
+  hover: new THREE.MeshStandardMaterial({ color: '#ffe0a8', emissive: '#e8a246', emissiveIntensity: 1 }),
+};
+const box = new THREE.BoxGeometry(1, 1, 1);
+const meshes = [], roofDeco = [];
+const deckWood = new THREE.MeshStandardMaterial({ color: '#9a7350', roughness: .8 });
+const poolMat = new THREE.MeshStandardMaterial({ color: '#4fb0c8', emissive: '#16485a', emissiveIntensity: .4, roughness: .1 });
+const roofMat = new THREE.MeshStandardMaterial({ color: '#2a231d', roughness: .9 });
+const Y_TER = 10.05 + 9 * 2.72 + 2.72;   // piso do terraço da cobertura (+37,25)
+function addDuplex(u) {
+  // dependência (pavimento superior) na metade voltada ao corredor; terraço descoberto com piscina na metade da fachada
+  const alongN = u.nx !== 0, wLat = alongN ? u.sz : u.sx, half = DEPTH / 2;
+  const cx = u.x - u.nx * half / 2, cz = u.z - u.nz * half / 2, tx = u.x + u.nx * half / 2, tz = u.z + u.nz * half / 2;
+  const up = new THREE.Mesh(box, MAT.sold);
+  up.scale.set(alongN ? half - .3 : wLat * .92, 2.45, alongN ? wLat * .92 : half - .3);
+  up.position.set(cx, Y_TER + 1.225, cz); up.userData.u = u; scene.add(up); meshes.push(up);
+  const lid = new THREE.Mesh(box, roofMat);
+  lid.scale.set(alongN ? half + .1 : wLat + .05, .2, alongN ? wLat + .05 : half + .1);
+  lid.position.set(cx, Y_TER + 2.55, cz); lid.userData.b = u.b; scene.add(lid); roofDeco.push(lid);
+  const dk = new THREE.Mesh(box, deckWood);
+  dk.scale.set(alongN ? half - .2 : wLat - .2, .06, alongN ? wLat - .2 : half - .2);
+  dk.position.set(tx, Y_TER + .03, tz); dk.userData.b = u.b; scene.add(dk); roofDeco.push(dk);
+  const pl = new THREE.Mesh(box, poolMat);
+  const pw = Math.min(2.6, wLat * .5), pd = half * .55;
+  pl.scale.set(alongN ? pd : pw, .08, alongN ? pw : pd);
+  pl.position.set(tx + (alongN ? 0 : wLat * .2), Y_TER + .07, tz + (alongN ? wLat * .2 : 0)); pl.userData.b = u.b; scene.add(pl); roofDeco.push(pl);
+}
+for (const u of units) {
+  const m = new THREE.Mesh(box, MAT.sold);
+  m.scale.set(u.sx, floorH(u.f), u.sz);
+  m.position.set(u.x, floorY(u.f) + floorH(u.f) / 2, u.z);
+  m.userData.u = u; u.mesh = m;
+  scene.add(m); meshes.push(m);
+  if (u.f === 12) addDuplex(u);
+}
+
+/* ---------- fachada: faixas de ripado em balanço, como nos renders ---------- */
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+function slatCanvas(h) {
+  // ripas verticais em tons de madeira, com vãos e pontas irregulares embaixo
+  const c = document.createElement('canvas'); c.width = 1024; c.height = h;
+  const g = c.getContext('2d');
+  const tones = ['#7a5636', '#8c6440', '#a3784c', '#b88a58', '#c99c68', '#d7ae7c', '#946b44'];
+  g.fillStyle = '#5c4129'; g.fillRect(0, 0, 1024, Math.round(h * .06));  // corrimão
+  for (let x = 0; x < 1024;) {
+    const w = 2 + rnd() * 4, gap = 1 + rnd() * 2.6;
+    g.fillStyle = tones[(rnd() * tones.length) | 0];
+    g.fillRect(x, 0, w, h * (0.68 + rnd() * 0.32));
+    x += w + gap;
+  }
+  return c;
+}
+const slatImg = { band: slatCanvas(160), crown: slatCanvas(220) };
+const texCache = new Map();
+function slatMat(kind, len) {
+  const key = kind + Math.round(len);
+  if (!texCache.has(key)) {
+    const t = new THREE.CanvasTexture(slatImg[kind]);
+    t.colorSpace = THREE.SRGBColorSpace; t.wrapS = THREE.RepeatWrapping;
+    t.repeat.set(len / 7, 1); t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    texCache.set(key, new THREE.MeshStandardMaterial({ map: t, alphaTest: .5, side: THREE.DoubleSide, roughness: .85 }));
+  }
+  return texCache.get(key);
+}
+const soffitMat = new THREE.MeshStandardMaterial({ color: '#241e19', roughness: .9 });
+const plantGeo = new THREE.IcosahedronGeometry(.55, 0);
+const plantMat = new THREE.MeshStandardMaterial({ color: '#3f6b35', roughness: 1, flatShading: true });
+const coreMat = new THREE.MeshStandardMaterial({ color: '#1f1b18', roughness: .9 });
+const bands = [], cores = [];
+const OUT = 1.25; // balanço da faixa além do vidro
+for (const [bk, B] of Object.entries(BLOCKS)) {
+  const b = +bk;
+  const hx = (B.axis === 'x' ? B.L / 2 : D / 2) + OUT, hz = (B.axis === 'x' ? D / 2 : B.L / 2) + OUT;
+  const levels = [...FLOORS.slice(1).map(f => [f, floorY(f), 'band']), [12, Y_TER, 'crown']];
+  for (const [f, y, kind] of levels) {
+    const grp = new THREE.Group(); grp.userData = { b, f };
+    const hb = kind === 'crown' ? 1.9 : 1.3, drop = kind === 'crown' ? .25 : .45;
+    const slab = new THREE.Mesh(box, soffitMat);
+    slab.scale.set(2 * hx - .4, .22, 2 * hz - .4); slab.position.set(B.cx, y - .11, B.cz); grp.add(slab);
+    const yc = y - drop + hb / 2;
+    const side = (len, x, z, rot) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(len, hb), slatMat(kind, len));
+      m.position.set(x, yc, z); m.rotation.y = rot; grp.add(m);
+    };
+    side(2 * hx, B.cx, B.cz - hz, 0); side(2 * hx, B.cx, B.cz + hz, 0);
+    side(2 * hz, B.cx - hx, B.cz, Math.PI / 2); side(2 * hz, B.cx + hx, B.cz, Math.PI / 2);
+    if (kind === 'band' && f > 2) { // floreiras nos vãos das varandas
+      const n = Math.round((hx + hz) / 4);
+      const pm = new THREE.InstancedMesh(plantGeo, plantMat, n), o = new THREE.Object3D();
+      for (let i = 0; i < n; i++) {
+        const t = rnd(), onX = rnd() < hx / (hx + hz), sgn = rnd() < .5 ? -1 : 1;
+        if (onX) o.position.set(B.cx + (t * 2 - 1) * (hx - 1), y + .95, B.cz + sgn * (hz - .7));
+        else o.position.set(B.cx + sgn * (hx - .7), y + .95, B.cz + (t * 2 - 1) * (hz - 1));
+        o.scale.setScalar(.7 + rnd() * .7); o.rotation.y = rnd() * 6; o.updateMatrix(); pm.setMatrixAt(i, o.matrix);
+      }
+      grp.add(pm);
+    }
+    scene.add(grp); bands.push(grp);
+  }
+  // núcleo de circulação
+  const core = new THREE.Mesh(box, coreMat);
+  const H = Y_TER + 2.45 - 6.93;
+  core.scale.set(B.axis === 'x' ? B.L - 1 : CORR, H, B.axis === 'x' ? CORR : B.L - 1);
+  core.position.set(B.cx, 6.93 + H / 2, B.cz); core.userData.b = b; scene.add(core); cores.push(core);
+}
+// marquise escura do térreo, sobre lojas e townhouses
+const marq = new THREE.Mesh(box, soffitMat);
+marq.scale.set(E.e - E.w + 1.6, .35, E.s - E.n + 1.6); marq.position.set(0, 6.55, 0); scene.add(marq);
+
+/* ---------- estado e filtros ---------- */
+const st = { tipos: new Set(), blocos: new Set(), pav: 'todos', preco: 0, sel: null, hover: null, ripado: true, lazer: false };
+const prices = DATA.unidades.map(u => u.p);
+const PMIN = Math.floor(Math.min(...prices) / 10000) * 10000, PMAX = Math.ceil(Math.max(...prices) / 10000) * 10000;
+st.preco = PMAX;
+const match = a => a && (!st.tipos.size || st.tipos.has(a.base)) && (!st.blocos.size || st.blocos.has(a.b)) && a.p <= st.preco && inPav(a.f);
+const inPav = f => f >= PAV[st.pav][0] && f <= PAV[st.pav][1];
+
+function paint() {
+  const top = PAV[st.pav][1];
+  for (const m of meshes) {
+    const u = m.userData.u;
+    m.visible = u.f <= top;
+    let mat = u.a ? (match(u.a) ? MAT.avail : MAT.dim) : u.res ? MAT.res : MAT.sold;
+    if (st.pav !== 'todos' && !inPav(u.f)) mat = MAT.ghost;
+    if (st.blocos.size && !st.blocos.has(u.b)) mat = u.a ? MAT.ghost : MAT.ghost;
+    if (st.hover === u) mat = MAT.hover;
+    if (st.sel === u) mat = MAT.sel;
+    m.material = mat;
+  }
+  const showB = b => !st.blocos.size || st.blocos.has(b);
+  const bot = st.pav === 'todos' ? 1 : PAV[st.pav][0];
+  bands.forEach(g => g.visible = st.ripado && g.userData.f <= top && g.userData.f >= bot && showB(g.userData.b));
+  cores.forEach(c => c.visible = top >= 3 && showB(c.userData.b));
+  deck.visible = top >= 2; marq.visible = top >= 2;
+  roofDeco.forEach(d => d.visible = top >= 12 && showB(d.userData.b));
+}
+
+function chips(el, items, set, key) {
+  el.innerHTML = items.map(([v, label, n]) => `<button class="chip" data-v="${v}">${label}<span>${n}</span></button>`).join('');
+  el.onclick = e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    const v = key === 'num' ? +c.dataset.v : c.dataset.v;
+    set.has(v) ? set.delete(v) : set.add(v);
+    update();
+  };
+}
+const order = ['Loja', 'Studio', 'Double Suites', '2 quartos', '3 quartos'];
+const cnt = (arr, fn) => arr.reduce((m, x) => (m[fn(x)] = (m[fn(x)] || 0) + 1, m), {});
+let byB = {};
+const disponiveis = () => units.filter(u => u.a).map(u => u.a);
+function buildChips() {
+  const D = disponiveis(), byBase = cnt(D, u => u.base); byB = cnt(D, u => u.b);
+  chips($('#f-tipos'), order.filter(t => byBase[t] || st.tipos.has(t)).map(t => [t, t, byBase[t] || 0]), st.tipos);
+  chips($('#f-blocos'), [1, 2, 3, 4].map(b => [b, 'Bloco 0' + b, byB[b] || 0]), st.blocos, 'num');
+}
+$('#f-andar').innerHTML = Object.keys(PAV).map(k => `<button class="seg" data-p="${k}">${PAV_LABEL[k]}</button>`).join('');
+$('#f-andar').onclick = e => { const s = e.target.closest('.seg'); if (s) { st.pav = s.dataset.p; update(); } };
+const pr = $('#f-preco'); pr.min = PMIN; pr.max = PMAX; pr.step = 10000; pr.value = PMAX;
+pr.oninput = () => { st.preco = +pr.value; update(); };
+$('#f-limpar').onclick = () => { st.tipos.clear(); st.blocos.clear(); st.pav = 'todos'; st.preco = PMAX; pr.value = PMAX; update(); };
+
+function update() {
+  document.querySelectorAll('#f-tipos .chip').forEach(c => c.classList.toggle('on', st.tipos.has(c.dataset.v)));
+  document.querySelectorAll('#f-blocos .chip').forEach(c => c.classList.toggle('on', st.blocos.has(+c.dataset.v)));
+  document.querySelectorAll('#f-andar .seg').forEach(c => c.classList.toggle('on', c.dataset.p === st.pav));
+  $('#f-preco-v').textContent = st.preco >= PMAX ? 'Sem limite' : 'até ' + brlK(st.preco);
+  const list = disponiveis().filter(match).sort((a, b) => a.b - b.b || a.f - b.f || +a.u - +b.u);
+  $('#count').textContent = $('#count-m').textContent = list.length;
+  $('#list').innerHTML = list.length ? list.map(a => `
+    <button class="row${st.sel && st.sel.a === a ? ' sel' : ''}" data-k="${a.b}-${a.u}">
+      <span class="r-id"><b>${a.u}</b><small>Bloco 0${a.b}</small></span>
+      <span class="r-tipo">${a.base}${a.variant ? ' · ' + a.variant : ''}<small>${m2(a.a)}</small></span>
+      <span class="r-preco">${brlK(a.p)}</span>
+    </button>`).join('') : '<p class="empty">Nenhuma unidade disponível com esses filtros. Limpe um filtro para ver mais opções.</p>';
+  paint();
+}
+$('#list').onclick = e => {
+  const r = e.target.closest('.row'); if (!r) return;
+  const u = units.find(x => x.a && (x.b + '-' + x.id) === r.dataset.k);
+  select(u, true);
+  document.body.classList.remove('filters-open');
+};
+
+/* ---------- plantas do book (jan/2026) ---------- */
+const inK = (k, arr) => arr.includes(k);
+function planta(u) {
+  const { b, f, k } = u, b13 = b === 1 || b === 3;
+  const one = (key, title) => ({ title, imgs: [['Planta', key]] });
+  const dup = (key, title) => ({ title, imgs: [['Pavimento inferior', key + '-i'], ['Pavimento superior', key + '-s']] });
+  if (f === 1) {
+    if (b === 1 || b === 2) { const a = k <= 6; return { title: `Lojas do Bloco ${b} · ${a ? '101 a 106' : b === 1 ? '107 a 115' : '107 a 110'}`, imgs: [['Planta do conjunto', `lj${b}-${a ? 'a' : 'b'}`]], conjunto: true }; }
+    if (b === 4) return one('th4-10' + k, 'Townhouse');
+    const m = { 1: 'th3-101', 2: 'th3-102', 3: 'th3-103', 4: 'th3-103', 5: 'th3-105', 9: 'th3-109', 14: 'th3-114', 15: 'th3-115', 16: 'th3-116', 17: 'th3-116' };
+    return one(m[k] || 'th3-106', 'Townhouse');
+  }
+  if (f === 2) {
+    if (b13) {
+      if (inK(k, [4, 11, 23])) return one('ug-st-b', 'Up Garden Studio');
+      if (inK(k, [7, 8, 19])) return one('ug-st-c', 'Up Garden Studio');
+      if (k === 1) return one('ug-ds-a', 'Up Garden Double Suítes');
+      if (k === 2) return one('ug-ds-b', 'Up Garden Double Suítes');
+      if (inK(k, [13, 14])) return one('ug-ds-c', 'Up Garden Double Suítes');
+      return one('ug-st-a', 'Up Garden Studio');
+    }
+    if (k === 1) return one('ug-2q-a', 'Up Garden 2 quartos');
+    if (inK(k, [12, 13])) return one('ug-2q-b', 'Up Garden 2 quartos');
+    if (inK(k, [2, 10])) return one('ug-3q-a', 'Up Garden 3 quartos');
+    if (k === 3) return one('ug-3q-b', 'Up Garden 3 quartos');
+    if (k === 9) return one('ug-3q-c', 'Up Garden 3 quartos');
+  }
+  if (f === 12) {
+    if (b13) return dup(inK(k, [1, 2, 13, 14]) ? 'cb-st-a' : inK(k, [4, 11, 16, 23]) ? 'cb-st-c' : inK(k, [7, 8, 19, 20]) ? 'cb-st-d' : 'cb-st-b', 'Cobertura Studio Dúplex');
+    if (inK(k, [2, 3, 9, 10])) return dup('cb3', 'Cobertura Dúplex 3 quartos');
+    return dup(inK(k, [1, 4, 5, 14]) ? 'cb2-a' : inK(k, [6, 7]) ? 'cb2-b' : inK(k, [8, 11]) ? 'cb2-c' : 'cb2-d', 'Cobertura Dúplex 2 quartos');
+  }
+  if (b13) {
+    if (inK(k, [1, 2, 13, 14])) return one('ds', 'Double Suítes');
+    return one(inK(k, [4, 11, 16, 23]) ? 'st-b' : inK(k, [7, 8, 19, 20]) ? 'st-c' : 'st-a', 'Studio');
+  }
+  if (inK(k, [2, 3, 9, 10])) return one('3q', 'Apartamento 3 quartos');
+  return one(inK(k, [1, 4, 5, 14]) ? '2q-a' : inK(k, [6, 7]) ? '2q-b' : inK(k, [8, 11]) ? '2q-c' : '2q-d', 'Apartamento 2 quartos');
+}
+const plSrc = key => `plantas/${key}.webp`;
+function plantaHTML(u) {
+  const P = planta(u);
+  return `<div class="plantas">
+    <p class="eyebrow">Planta · ${P.title}</p>
+    ${P.imgs.length > 1 ? `<div class="pl-tabs" role="tablist">${P.imgs.map(([l], i) => `<button class="seg${i ? '' : ' on'}" data-pl="${i}" role="tab">${l}</button>`).join('')}</div>` : ''}
+    <button class="pl-img" id="pl-open" aria-label="Ampliar planta"><img id="pl-img" src="${plSrc(P.imgs[0][1])}" alt="Planta ${P.title}, unidade ${u.id}" loading="lazy"></button>
+    <p class="note">${P.conjunto ? `Planta do conjunto de lojas: procure a Loja ${u.id} no desenho. ` : ''}Toque para ampliar. Planta ilustrativa do book; mobiliário é sugestão.</p>
+  </div>`;
+}
+function bindPlanta(u) {
+  const P = planta(u), tabs = document.querySelector('#unit-body .pl-tabs');
+  if (tabs) tabs.onclick = e => {
+    const t = e.target.closest('[data-pl]'); if (!t) return;
+    tabs.querySelectorAll('.seg').forEach(x => x.classList.toggle('on', x === t));
+    $('#pl-img').src = plSrc(P.imgs[+t.dataset.pl][1]);
+  };
+  $('#pl-open').onclick = () => { $('#lb-img').src = $('#pl-img').src; $('#lightbox').hidden = false; };
+}
+$('#lightbox').onclick = () => $('#lightbox').hidden = true;
+
+/* ---------- ficha ---------- */
+const M = DATA.meta.fluxo;
+function resumo(a) {
+  return `Arte Wood · Cidade Arte\nBloco 0${a.b} · Unidade ${a.u} · ${floorName(a.f, a.b)}\n${a.base}${a.variant ? ' ' + a.variant : ''} · ${m2(a.a)}\nValor: ${brl(a.p)}\n` +
+    `Sinal (${M.sinal.pct}%): ${brl(a.s)} em ${M.sinal.inicio}\n${M.mensais.n} mensais de ${brl(a.m)} a partir de ${M.mensais.inicio}\n` +
+    `${M.intermediarias.n} intermediárias de ${brl(a.i)} a partir de ${M.intermediarias.inicio}\nParcela única de ${brl(a.f2)} em ${M.unica.inicio}\n` +
+    `${DATA.meta.tabela}. Valores sujeitos a alteração.`;
+}
+function select(u, fly) {
+  st.sel = u;
+  document.body.classList.toggle('has-unit', !!u);
+  $('#unit').hidden = !u;
+  if (u) {
+    const a = u.a;
+    $('#unit-body').innerHTML = `
+      <p class="eyebrow">Bloco 0${u.b} · ${floorName(u.f, u.b)}</p>
+      <p class="u-num">${u.id}</p>
+      ${a ? `<p class="u-tipo">${a.base}${a.variant ? ' <span>· ' + a.variant + '</span>' : ''}</p>` : ''}
+      <ul class="tags">
+        <li class="${a ? 'st-d' : u.res ? 'st-r' : 'st-v'}">${a ? 'Disponível' : u.st === 'r' ? 'Reservada' : u.res ? 'Disponível · sem preço na tabela' : 'Vendida ou fora de venda'}</li>
+        ${a ? `<li>${m2(a.a)}</li>` : ''}
+      </ul>
+      ${a ? `
+      <div class="price"><small>Valor da unidade</small><strong>${brl(a.p)}</strong><span class="m2">${brl(Math.round(a.p / a.a))}/m²</span></div>
+      <table class="fluxo">
+        <thead><tr><th>Fluxo</th><th>Parcelas</th><th>Valor</th></tr></thead>
+        <tbody>
+          <tr><td>Sinal<small>${M.sinal.pct}%</small></td><td>1× · ${M.sinal.inicio}</td><td>${brl(a.s)}</td></tr>
+          <tr><td>Mensais<small>${String(M.mensais.pct).replace('.',',')}%</small></td><td>${M.mensais.n}× · desde ${M.mensais.inicio}</td><td>${brl(a.m)}</td></tr>
+          <tr><td>Intermediárias<small>${String(M.intermediarias.pct).replace('.',',')}%</small></td><td>${M.intermediarias.n}× · desde ${M.intermediarias.inicio}</td><td>${brl(a.i)}</td></tr>
+          <tr><td>Parcela única<small>${M.unica.pct}%</small></td><td>1× · ${M.unica.inicio}</td><td>${brl(a.f2)}</td></tr>
+        </tbody>
+      </table>
+      <button class="cta" id="copy">Copiar resumo para o cliente</button>
+      <p class="note" id="copy-msg">${DATA.meta.tabela}.</p>`
+      : `<p class="sold">${u.st === 'r' ? 'Unidade reservada no mapa de vendas. Pode voltar ao estoque: consulte o comercial.' : u.res ? 'Unidade livre no mapa de vendas, mas fora da tabela de preços vigente. Consulte o comercial.' : 'Esta unidade não está disponível. Consulte o comercial para opções semelhantes no mesmo bloco.'}</p>`}
+      ${plantaHTML(u)}`;
+    bindPlanta(u);
+    const c = $('#copy');
+    if (c) c.onclick = () => {
+      const txt = resumo(a);
+      const done = () => { $('#copy-msg').textContent = 'Resumo copiado. Cole no WhatsApp ou e-mail.'; };
+      const fallback = () => {
+        if (!$('#copy-out')) c.insertAdjacentHTML('afterend', '<textarea id="copy-out" aria-label="Resumo da unidade" readonly></textarea>');
+        const t = $('#copy-out'); t.value = txt; t.focus(); t.select();
+        $('#copy-msg').textContent = 'Texto selecionado. Use Ctrl+C (ou Copiar) para levar.';
+      };
+      try { navigator.clipboard.writeText(txt).then(done, fallback); } catch { fallback(); }
+    };
+    if (fly) focusOn(u);
+  }
+  update();
+}
+$('#unit-close').onclick = () => select(null);
+
+/* ---------- câmera ---------- */
+const C = new THREE.Vector3(0, 14, 0);
+const VIEWS = {
+  geral: [new THREE.Vector3(-110, 95, 125), C],
+  norte: [new THREE.Vector3(25, 38, -165), C],
+  sul: [new THREE.Vector3(-25, 38, 165), C],
+  topo: [new THREE.Vector3(0, 240, 1), new THREE.Vector3(0, 0, 0)],
+};
+let anim = null;
+function fly(pos, target) {
+  anim = { p0: camera.position.clone(), t0: controls.target.clone(), p1: pos.clone(), t1: target.clone(), s: performance.now(), d: matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 900 };
+}
+function focusOn(u) {
+  const t = new THREE.Vector3(u.x, floorY(u.f) + 1.5, u.z);
+  // apartamentos voltados ao pátio são vistos de cima, por sobre o bloco oposto
+  const inner = u.f > 1 && (u.nx * u.x + u.nz * u.z) < 0;
+  const dist = inner ? 38 : u.f === 1 ? 70 : 60, lift = inner ? 30 : u.f === 1 ? 18 : 22;
+  fly(new THREE.Vector3(t.x + u.nx * dist + u.nz * 22, t.y + lift, t.z + u.nz * dist - u.nx * 22), t);
+}
+$('#views').onclick = e => { const v = e.target.closest('[data-view]'); if (v) fly(...VIEWS[v.dataset.view]); };
+camera.position.copy(VIEWS.geral[0]); controls.target.copy(C);
+
+/* ---------- interação ---------- */
+const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+const tip = $('#tip');
+let down = null;
+function pick(e) {
+  const r = canvas.getBoundingClientRect();
+  ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ptr, camera);
+  const hit = ray.intersectObjects(meshes.filter(m => m.visible && m.material !== MAT.ghost))[0];
+  return hit ? hit.object.userData.u : null;
+}
+canvas.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const u = pick(e);
+  if (u !== st.hover) { st.hover = u; paint(); }
+  canvas.style.cursor = u ? 'pointer' : 'grab';
+  if (u) {
+    tip.hidden = false;
+    tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 14}px)`;
+    tip.innerHTML = u.a
+      ? `<b>${u.id}</b> <span class="muted">· Bloco 0${u.b}</span><br>${u.a.base}${u.a.variant ? ' · ' + u.a.variant : ''} · ${m2(u.a.a)}<br><em>${brl(u.a.p)}</em>`
+      : `<b>${u.id}</b> <span class="muted">· Bloco 0${u.b}</span><br><span class="muted">${u.st === 'r' ? 'Reservada' : u.res ? 'Disponível · consulte' : 'Vendida ou fora de venda'}</span>`;
+  } else tip.hidden = true;
+});
+canvas.addEventListener('pointerleave', () => { tip.hidden = true; if (st.hover) { st.hover = null; paint(); } });
+canvas.addEventListener('pointerdown', e => down = [e.clientX, e.clientY]);
+canvas.addEventListener('pointerup', e => {
+  if (!down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 6) return;
+  const u = pick(e); if (u) select(u, false);
+});
+$('#btn-filtros').onclick = () => document.body.classList.add('filters-open');
+$('#filters-close').onclick = () => document.body.classList.remove('filters-open');
+addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('#lightbox').hidden) $('#lightbox').hidden = true; else select(null); } });
+
+/* ---------- rótulos dos blocos ---------- */
+const labels = Object.entries(BLOCKS).map(([b, B]) => {
+  const el = document.createElement('div'); el.className = 'tag3d';
+  $('#labels').appendChild(el);
+  return { el, b, p: new THREE.Vector3(B.cx, floorY(12) + 8, B.cz) };
+});
+[['Avenida 1', 0, -62], ['Rua 2.5.1', 0, 62], ['Av. Antonio Gallotti', -60, 0], ['Rua 2.5.2', 60, 0]].forEach(([t, x, z]) => {
+  const el = document.createElement('div'); el.className = 'tag3d street'; el.textContent = t;
+  $('#labels').appendChild(el); labels.push({ el, p: new THREE.Vector3(x, 0, z), edge: true });
+});
+[['Nascente', 92, 0, 'sun'], ['Poente', -92, 0, 'sun']].forEach(([t, x, z, c]) => {
+  const el = document.createElement('div'); el.className = 'tag3d ' + c; el.textContent = t;
+  $('#labels').appendChild(el); labels.push({ el, p: new THREE.Vector3(x, 0, z), edge: true });
+});
+const LAZER = ["Acesso bloco", "Lounge externo", "Academia", "Fitness externo", "Sauna e spa com repouso", "Sala de massagem", "Hidromassagem", "Piscina adulto", "Deck molhado", "Piscina com raia", "Piscina infantil", "Biribol", "Bar da piscina*", "Solarium", "Playground", "Churrasqueira", "Pool house", "Pet place", "Quadra de areia recreativa", "Quadra poliesportiva recreativa", "Lavanderia compartilhada*", "Sala de reunião", "Coworking", "Sala de lutas", "Sala multiuso", "Espaço redes sociais", "Brinquedoteca", "Salão de jogos", "Salão de festas gourmet", "Lounge externo do salão de festas gourmet", "Espaço ferramentas compartilhadas", "Pet care", "Espaço take it*", "Redário"];
+const POI = [[34, -21.5, -41.5], [32, 23.5, -37.9], [31, -3.1, -37.6], [1, -5.7, -33.2], [1, 17.7, -32.8], [2, 7.1, -31.2], [2, -16.3, -31.2], [18, 30.6, -30.5], [6, -11.7, -28.3], [6, -6.4, -28.3], [17, 31.6, -24.7], [5, -4.6, -22.6], [1, -28.7, -22.0], [13, -6.2, -18.2], [20, 21.1, -18.1], [4, -14.0, -16.3], [3, -19.7, -16.3], [7, -0.9, -13.4], [11, 7.1, -12.1], [9, -6.2, -12.0], [1, 31.8, -6.7], [30, 21.1, -3.5], [10, 8.3, -2.2], [8, 0.0, -2.0], [33, 31.8, -1.4], [13, -17.4, -1.2], [1, -29.3, 4.3], [29, 21.6, 8.0], [12, 0.0, 8.9], [15, -15.1, 9.4], [14, -7.3, 14.1], [28, 19.3, 17.9], [23, 2.2, 21.2], [16, -18.6, 21.3], [16, -7.5, 21.3], [25, 12.0, 21.3], [1, 31.4, 21.9], [27, 21.3, 23.6], [19, -31.1, 24.1], [24, 7.1, 26.6], [26, 31.1, 27.2], [2, -6.2, 29.6], [2, 15.5, 29.8], [1, -15.8, 32.3], [1, 2.6, 33.8], [21, -23.5, 37.9], [22, 6.8, 38.4], [2, 22.3, 46.3]];
+const poiEls = POI.map(([n, x, z]) => {
+  const el = document.createElement('button'); el.className = 'poi'; el.textContent = n; el.title = LAZER[n - 1];
+  el.setAttribute('aria-label', `${n}. ${LAZER[n - 1]}`);
+  el.onclick = () => focusLazer(n);
+  $('#labels').appendChild(el); return { el, n, p: new THREE.Vector3(x, 7.2, z) };
+});
+$('#lazer-list').innerHTML = LAZER.map((t, i) => `<li><button data-n="${i + 1}"><b>${i + 1}</b><span>${t}</span></button></li>`).join('');
+$('#lazer-list').onclick = e => { const b = e.target.closest('[data-n]'); if (b) focusLazer(+b.dataset.n); };
+function focusLazer(n) {
+  setLazer(true);
+  poiEls.forEach(p => p.el.classList.toggle('on', p.n === n));
+  document.querySelectorAll('#lazer-list button').forEach(b => b.classList.toggle('on', +b.dataset.n === n));
+  const pts = poiEls.filter(p => p.n === n), c = new THREE.Vector3();
+  pts.forEach(p => c.add(p.p)); c.divideScalar(pts.length);
+  fly(new THREE.Vector3(c.x * .6, 95, c.z * .6 + 55), c);
+}
+function setLazer(on) {
+  st.lazer = on; document.body.classList.toggle('lazer-on', on);
+  $('#btn-lazer').setAttribute('aria-pressed', on); $('#lazer').hidden = !on;
+  if (on) { select(null); if (st.pav === 'tipo' || st.pav === 'cob') { st.pav = 'todos'; update(); } }
+  else poiEls.forEach(p => p.el.classList.remove('on'));
+}
+$('#btn-lazer').onclick = () => { const on = !st.lazer; setLazer(on); if (on) fly(new THREE.Vector3(0, 150, 95), new THREE.Vector3(0, 7, 0)); };
+$('#lazer-close').onclick = () => setLazer(false);
+const v = new THREE.Vector3();
+function placeLabels(w, h) {
+  if (st.lazer) for (const p of poiEls) {
+    v.copy(p.p).project(camera);
+    p.el.style.visibility = v.z < 1 && deck.visible ? 'visible' : 'hidden';
+    p.el.style.transform = `translate(${(v.x + 1) / 2 * w}px, ${(1 - v.y) / 2 * h}px)`;
+  }
+  for (const l of labels) {
+    v.copy(l.p).project(camera);
+    l.el.style.opacity = v.z < 1 && (!l.edge || camera.position.x * l.p.x + camera.position.z * l.p.z > 0) ? 1 : 0;
+    l.el.style.transform = `translate(${(v.x + 1) / 2 * w}px, ${(1 - v.y) / 2 * h}px) translate(-50%, -100%)`;
+  }
+}
+
+/* ---------- loop ---------- */
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+  camera.fov = w < 760 ? 50 : 38; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+function loop(t) {
+  if (anim) {
+    const k = Math.min(1, (t - anim.s) / anim.d), e = 1 - Math.pow(1 - k, 3);
+    camera.position.lerpVectors(anim.p0, anim.p1, e); controls.target.lerpVectors(anim.t0, anim.t1, e);
+    if (k >= 1) anim = null;
+  }
+  controls.update();
+  renderer.render(scene, camera);
+  placeLabels(canvas.clientWidth, canvas.clientHeight);
+  requestAnimationFrame(loop);
+}
+
+/* ---------- topo ---------- */
+/* ---------- disponibilidade ao vivo (mapa DTCX via /api/disponibilidade) ---------- */
+function aplicar(mapa) {
+  for (const u of units) {
+    const k = u.b + '-' + u.id, t = avail.get(k) || null;
+    if (mapa) { const s = mapa.get(k); u.st = s || 'v'; }
+    else u.st = t ? 'd' : 'v';
+    u.a = u.st === 'd' ? t : null;
+    u.res = u.st === 'r' || (u.st === 'd' && !t);
+  }
+  buildChips();
+  const D = disponiveis(), nres = units.filter(u => u.st === 'r').length;
+  const ps = D.map(a => a.p);
+  $('#hero-stat').innerHTML = `<b>${D.length}</b> unidades disponíveis de ${units.length}${nres ? ` · ${nres} reservadas` : ''} · 4 blocos ao redor do PUC` + (ps.length ? `<br>a partir de <b>${brl(Math.min(...ps))}</b>` : '');
+  labels.forEach(l => { if (l.b) l.el.innerHTML = `Bloco 0${l.b}<span>${byB[l.b] || 0} disp.</span>`; });
+  if (st.sel) select(st.sel); else update();
+}
+async function carregar() {
+  try {
+    const r = await fetch('api/disponibilidade', { cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    const js = await r.json();
+    aplicar(new Map(js.unidades.map(x => [x.b + '-' + x.u, x.st])));
+    const h = new Date(js.atualizado).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    $('#live').className = 'live'; $('#live').textContent = `Ao vivo do mapa de vendas · atualizado às ${h}`;
+  } catch (e) {
+    if (!units[0].st) aplicar(null);
+    $('#live').className = 'live off'; $('#live').textContent = `Mapa de vendas fora do ar · mostrando a ${DATA.meta.tabela.toLowerCase()}`;
+  }
+}
+aplicar(null);
+carregar();
+setInterval(() => { if (!document.hidden) carregar(); }, 90000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) carregar(); });
+$('#tabela').textContent = `${DATA.meta.tabela} · Sinal ${M.sinal.pct}% · ${M.mensais.n} mensais · ${M.intermediarias.n} intermediárias · parcela única ${M.unica.inicio}`;
+const btnR = $('#btn-ripado');
+btnR.onclick = () => { st.ripado = !st.ripado; btnR.setAttribute('aria-pressed', st.ripado); paint(); };
+const GAL = [
+  ['vista-dois-blocos', 'Vista dos blocos a partir das quadras'],
+  ['fachada-dia', 'Fachada frontal · dia'], ['fachada-manha', 'Fachada frontal · luz da manhã'],
+  ['fachada-tarde', 'Fachada frontal · tarde'], ['fachada-entardecer', 'Fachada frontal · fim de tarde'],
+  ['fachada-noite', 'Fachada frontal · entardecer'],
+];
+let gi = 0;
+const showGal = i => { gi = (i + GAL.length) % GAL.length; $('#gal-img').src = `img/${GAL[gi][0]}.webp`; $('#gal-img').alt = GAL[gi][1]; $('#gal-cap').textContent = `${GAL[gi][1]} · ${gi + 1}/${GAL.length} · imagem ilustrativa`; };
+$('#btn-renders').onclick = () => { showGal(gi); $('#gal').hidden = false; $('#gal-close').focus(); };
+$('#gal-prev').onclick = () => showGal(gi - 1);
+$('#gal-next').onclick = () => showGal(gi + 1);
+$('#gal-close').onclick = () => $('#gal').hidden = true;
+addEventListener('keydown', e => { if ($('#gal').hidden) return; if (e.key === 'ArrowLeft') showGal(gi - 1); if (e.key === 'ArrowRight') showGal(gi + 1); if (e.key === 'Escape') $('#gal').hidden = true; });
+update();
+requestAnimationFrame(loop);
+setTimeout(() => document.body.classList.add('ready'), 1400);
+</script>
+
+</body>
+</html>

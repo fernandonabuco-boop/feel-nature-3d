@@ -1,0 +1,15 @@
+ARTE WOOD · DISPONIBILIDADE 3D
+
+Situação no mapa online DTCX (lida a cada 90 s) → como aparece no site:
+- ÂMBAR, com ficha completa: Não Vendida / Estoque (com preço da tabela em data/unidades.json)
+- AREIA, ficha sem preço: Reservada/ Assinatura dos instrumentos aquisitivos;
+  Assinado, com Sinal a creditar e documentos na imobiliária;
+  Sinal a Creditar, mas com todos os documentos entregue na Calper
+  (e unidades livres no mapa que não estejam na tabela de preços)
+- CINZA, sem dados: todas as demais situações
+Se o mapa estiver fora do ar, o site mostra a tabela de preços como disponibilidade.
+
+ARQUIVOS: index.html · api/disponibilidade.js (leitura do mapa) · data/unidades.json (tabela de preços)
+          img/ (renders, logo, masterplan do PUC) · plantas/ (plantas do book jan/2026)
+ATUALIZAR TABELA: trocar data/unidades.json e fazer push.
+CONFERIR: <url-do-projeto>/api/disponibilidade  ->  "metodo":"dtcx"
